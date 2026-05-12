@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-label="ROMERO Impermeabilizaciones">
+  <!-- Tres barras horizontales (≡) fusionadas con la R -->
+  <g fill="#0B0B0B">
+    <rect x="14" y="34"  width="150" height="22" rx="2"/>
+    <rect x="14" y="78"  width="150" height="22" rx="2"/>
+    <rect x="14" y="122" width="150" height="22" rx="2"/>
+    <!-- Letra R estilizada -->
+    <path d="M150 24 h54 c30 0 52 18 52 46 0 22-14 38-34 44 l40 64 h-44 l-36-58 h-10 v58 h-40 V24 z m40 32 v34 h18 c12 0 20-7 20-17 0-10-8-17-20-17 h-18 z"/>
+  </g>
+  <!-- ROMERO -->
+  <text x="284" y="118" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="108" letter-spacing="-2" fill="#0B0B0B">ROMERO</text>
+  <!-- IMPERMEABILIZACIONES -->
+  <text x="286" y="160" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="26" letter-spacing="6" fill="#0B0B0B">IMPERMEABILIZACIONES</text>
+</svg>

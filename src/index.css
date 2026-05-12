@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+/* Que los colores de marca se impriman tal cual */
+.sheet, .sheet * {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-romero-gray text-romero-ink font-sans antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Inputs base */
+.input {
+  @apply w-full rounded-xl border border-romero-gray-2 bg-white px-3.5 py-3 text-[15px] outline-none transition focus:border-romero-ink focus:ring-4 focus:ring-romero-yellow/40;
+}
+.label {
+  @apply block text-[12px] font-semibold uppercase tracking-wider text-romero-gray-3 mb-1.5;
+}
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-primary { @apply btn bg-romero-ink text-white hover:bg-black; }
+.btn-yellow  { @apply btn bg-romero-yellow text-romero-ink hover:bg-romero-yellow-deep; }
+.btn-ghost   { @apply btn bg-white text-romero-ink border border-romero-gray-2 hover:bg-romero-gray; }
+.btn-danger  { @apply btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-100; }
+
+.card {
+  @apply bg-white rounded-2xl border border-romero-gray-2;
+}
+
+/* ===========================
+   Print / PDF (A4)
+   =========================== */
+@page {
+  size: A4;
+  margin: 12mm 10mm;
+}
+
+@media print {
+  html, body {
+    background: #fff !important;
+  }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+  }
+  .page-break { page-break-before: always; }
+  .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+}
+.print-only { display: none; }
+
+/* Hoja A4 visual en pantalla */
+.sheet {
+  width: 100%;
+  max-width: 210mm;
+  margin: 0 auto;
+  background: #fff;
+  @apply shadow-sheet rounded-2xl;
+}
