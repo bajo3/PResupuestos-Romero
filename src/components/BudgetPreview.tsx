@@ -57,13 +57,10 @@ function Footer({ budget }: { budget: Budget }) {
       </div>
 
       {/* Barra inferior */}
-      <div className="mt-5 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-[0.18em] text-white/40">
-          Pres. N° {budget.number || '—'}
-        </span>
-        <span className="text-[10px] uppercase tracking-[0.18em] text-white/40">
-          Aplicador homologado · CE · Revestech
-        </span>
+      <div className="mt-5 pt-4 border-t border-white/10">
+        <p className="text-[10px] uppercase tracking-[0.15em] text-white/40 leading-relaxed">
+          Pres. N° {budget.number || '—'} &nbsp;·&nbsp; Aplicador homologado CE &nbsp;·&nbsp; Revestech
+        </p>
       </div>
     </footer>
   )
@@ -73,10 +70,10 @@ export function BudgetPreview({ budget }: Props) {
   const t = computeTotals(budget)
 
   return (
-    <article className="sheet overflow-hidden print:overflow-visible">
+    <article className="sheet print:overflow-visible">
 
       {/* ============ HERO ============ */}
-      <header className="avoid-break relative bg-romero-ink text-white">
+      <header className="avoid-break relative bg-romero-ink text-white overflow-hidden">
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
@@ -101,7 +98,8 @@ export function BudgetPreview({ budget }: Props) {
               <img
                 src="/logo-romero.svg"
                 alt="ROMERO Impermeabilizaciones"
-                className="h-10 sm:h-13 w-auto max-w-[160px] sm:max-w-none object-contain"
+                className="h-9 sm:h-12 w-auto object-contain"
+                style={{ maxWidth: '210px' }}
               />
             </div>
             <div className="text-right relative z-10 min-w-0">

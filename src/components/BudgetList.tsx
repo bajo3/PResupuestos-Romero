@@ -32,7 +32,7 @@ export function BudgetList({ budgets, onNew, onView, onEdit, onDuplicate, onDele
       <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-romero-gray-2">
         <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
           <div className="bg-romero-yellow rounded-xl p-1.5">
-            <img src="/logo-romero.svg" alt="ROMERO" className="h-8 w-auto object-contain" />
+            <img src="/logo-romero.svg" alt="ROMERO" className="h-8 w-auto object-contain" style={{ maxWidth: '160px' }} />
           </div>
           <div className="leading-tight min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-romero-gray-3 truncate">
