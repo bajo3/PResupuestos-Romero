@@ -97,12 +97,12 @@ test.describe('Vista previa del presupuesto demo', () => {
     await expect(page.getByText('+54 9 2284 59-7150').first()).toBeVisible()
   })
 
-  test('barra de acciones: Volver, Editar, Imprimir, Guardar PDF', async ({ page }) => {
+  test('barra de acciones: Volver, Editar, Imprimir, Descargar PDF', async ({ page }) => {
     await openDemo(page)
     await expect(page.getByText('← Volver')).toBeVisible()
     await expect(page.getByText(/Editar/).first()).toBeVisible()
     await expect(page.getByText(/Imprimir/)).toBeVisible()
-    await expect(page.getByText(/Guardar PDF/)).toBeVisible()
+    await expect(page.getByText(/Descargar PDF/)).toBeVisible()
   })
 
   test('Volver regresa al home', async ({ page }) => {

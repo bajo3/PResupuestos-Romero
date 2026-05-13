@@ -1,47 +1,55 @@
+import { useState } from 'react'
+
 interface Props {
   onBack: () => void
   onEdit: () => void
+  clientName?: string
 }
 
-function openPrintWindow() {
-  // Abre una ventana limpia solo con la hoja y dispara el diálogo de impresión/descarga
+async function downloadPDF(clientName: string, setLoading: (v: boolean) => void) {
   const sheet = document.querySelector('.sheet') as HTMLElement | null
-  if (!sheet) { window.print(); return }
+  if (!sheet) return
 
-  const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-    .map((el) => el.outerHTML)
-    .join('\n')
+  setLoading(true)
+  try {
+    const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf'),
+    ])
 
-  const win = window.open('', '_blank', 'width=900,height=700')
-  if (!win) { window.print(); return }
+    const canvas = await html2canvas(sheet, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    })
 
-  win.document.write(`<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  ${styles}
-  <style>
-    body { background:#fff; margin:0; padding:0; }
-    @page { size: A4; margin: 12mm 10mm; }
-    .no-print { display:none!important; }
-    .sheet { box-shadow:none!important; border:none!important; border-radius:0!important; max-width:none!important; }
-    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  </style>
-</head>
-<body>
-  ${sheet.outerHTML}
-  <script>
-    window.onload = function() {
-      setTimeout(function(){ window.print(); }, 400);
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const pageW = pdf.internal.pageSize.getWidth()   // 210mm
+    const pageH = pdf.internal.pageSize.getHeight()  // 297mm
+
+    // Scale canvas to fit page width
+    const imgH = (canvas.height * pageW) / canvas.width
+    let remaining = imgH
+    let offsetY = 0
+
+    while (remaining > 0) {
+      if (offsetY > 0) pdf.addPage()
+      pdf.addImage(canvas, 'PNG', 0, -offsetY, pageW, imgH)
+      offsetY += pageH
+      remaining -= pageH
     }
-  <\/script>
-</body>
-</html>`)
-  win.document.close()
+
+    const safe = (clientName || 'presupuesto').replace(/[^a-zA-Z0-9\s\-áéíóúüñÁÉÍÓÚÜÑ]/g, '').trim()
+    pdf.save(`presupuesto-${safe || 'romero'}.pdf`)
+  } finally {
+    setLoading(false)
+  }
 }
 
-export function PrintActions({ onBack, onEdit }: Props) {
+export function PrintActions({ onBack, onEdit, clientName = '' }: Props) {
+  const [loading, setLoading] = useState(false)
+
   return (
     <div className="no-print sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-romero-gray-2">
       <div className="mx-auto max-w-5xl px-3 sm:px-6 py-2.5 flex items-center gap-2">
@@ -55,21 +63,23 @@ export function PrintActions({ onBack, onEdit }: Props) {
         <button
           onClick={() => window.print()}
           className="btn-ghost py-2 text-[13px]"
-          title="Imprime en la ventana actual"
         >
           <span className="hidden sm:inline">🖨 </span>Imprimir
         </button>
         <button
-          onClick={openPrintWindow}
-          className="btn-yellow py-2 text-[13px]"
-          title="Abre una ventana limpia y te permite guardar como PDF"
+          onClick={() => downloadPDF(clientName, setLoading)}
+          disabled={loading}
+          className="btn-yellow py-2 text-[13px] min-w-[110px] flex items-center justify-center gap-1.5"
         >
-          <span className="hidden sm:inline">⬇ </span>Guardar PDF
+          {loading ? (
+            <>
+              <span className="inline-block w-3.5 h-3.5 border-2 border-romero-ink/30 border-t-romero-ink rounded-full animate-spin" />
+              Generando…
+            </>
+          ) : (
+            <>⬇ Descargar PDF</>
+          )}
         </button>
-      </div>
-      {/* Ayuda sutil */}
-      <div className="hidden sm:block bg-romero-gray border-t border-romero-gray-2 px-6 py-1.5 text-[11px] text-romero-gray-3 text-center">
-        En el diálogo de impresión elegí <strong>Guardar como PDF</strong> para descargar el archivo
       </div>
     </div>
   )

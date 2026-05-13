@@ -86,6 +86,7 @@ export default function App() {
         <PrintActions
           onBack={() => setView({ kind: 'list' })}
           onEdit={() => setView({ kind: 'form', budget: view.budget })}
+          clientName={view.budget.client}
         />
         <main className="px-3 sm:px-6 py-4 sm:py-8 print:p-0">
           <BudgetPreview budget={view.budget} />
