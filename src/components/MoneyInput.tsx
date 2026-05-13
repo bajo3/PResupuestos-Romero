@@ -23,13 +23,13 @@ export function MoneyInput({ value, onChange, placeholder, prefix = '$', classNa
 
   return (
     <div className={'relative ' + (className ?? '')}>
-      <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-romero-gray-3 font-semibold">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-romero-gray-3 font-bold text-sm select-none">
         {prefix}
       </span>
       <input
         id={id}
         inputMode="numeric"
-        className="input pl-8"
+        className="input pl-7"
         placeholder={placeholder}
         value={text}
         onChange={(e) => {

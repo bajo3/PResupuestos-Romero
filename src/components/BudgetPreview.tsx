@@ -22,32 +22,48 @@ function SectionTitle({ n, label }: { n: string; label: string }) {
 function Footer({ budget }: { budget: Budget }) {
   return (
     <footer className="avoid-break -mx-6 sm:-mx-10 print:mx-0 mt-10 bg-romero-ink text-white px-5 sm:px-10 py-6 rounded-b-2xl print:rounded-none">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="h-1.5 w-10 bg-romero-yellow rounded-full" />
-        <div className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-romero-yellow">
+      {/* Marca */}
+      <div className="flex items-center gap-3 mb-5">
+        <div className="h-1.5 w-8 bg-romero-yellow rounded-full" />
+        <div className="text-[10px] font-extrabold uppercase tracking-[0.26em] text-romero-yellow">
           ROMERO Impermeabilizaciones
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-[12px] leading-relaxed">
-        <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1">Contacto</div>
-          <div className="font-semibold break-all">impermeabilizacionesromero.com</div>
-          <div className="text-white/80">Cel: 11 3155 2150</div>
+
+      {/* Contactos — 2 columnas en mobile, 3 en sm */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-[12px] leading-relaxed">
+        {/* Contacto principal */}
+        <div className="col-span-2 sm:col-span-1">
+          <div className="text-[9px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Web</div>
+          <div className="font-semibold text-[11px] sm:text-[12px]">impermeabilizacionesromero.com</div>
+          <div className="text-white/70 mt-1">+54 9 2284 59-7150</div>
         </div>
+
+        {/* Buenos Aires */}
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1">Buenos Aires</div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Buenos Aires</div>
           <div className="font-semibold">Emilio Frers 1126</div>
-          <div className="text-white/80">Martínez</div>
+          <div className="text-white/70">Martínez, B.A.</div>
+          <div className="text-white/70 mt-0.5">+54 9 2284 59-7150</div>
         </div>
+
+        {/* Tandil */}
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1">Tandil</div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Tandil</div>
           <div className="font-semibold">Colectora Macaya 1253</div>
-          <div className="text-white/80">Cel: 249 425-1903</div>
+          <div className="text-white/70">Tandil, B.A.</div>
+          <div className="text-white/70 mt-0.5">+54 9 2284 59-7150</div>
         </div>
       </div>
-      <div className="mt-5 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.18em] text-white/40">
-        <span>Presupuesto N° {budget.number || '—'}</span>
-        <span>Aplicador homologado · CE</span>
+
+      {/* Barra inferior */}
+      <div className="mt-5 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-[0.18em] text-white/40">
+          Pres. N° {budget.number || '—'}
+        </span>
+        <span className="text-[10px] uppercase tracking-[0.18em] text-white/40">
+          Aplicador homologado · CE · Revestech
+        </span>
       </div>
     </footer>
   )

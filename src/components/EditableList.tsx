@@ -22,45 +22,57 @@ export function EditableList({ items, onChange, placeholder, addLabel = 'Agregar
   const add = () => onChange([...items, ''])
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {items.map((item, i) => (
-        <div key={i} className="flex items-start gap-2">
-          <div className="flex flex-col gap-1 pt-2">
+        <div key={i} className="rounded-xl border border-romero-gray-2 bg-white overflow-hidden">
+          {/* Barra de controles arriba */}
+          <div className="flex items-center gap-1 px-2 py-1.5 bg-romero-gray border-b border-romero-gray-2">
+            <span className="text-[11px] font-bold text-romero-gray-3 px-1">
+              #{String(i + 1).padStart(2, '0')}
+            </span>
+            <div className="flex-1" />
             <button
               type="button"
               onClick={() => move(i, -1)}
-              className="text-romero-gray-3 hover:text-romero-ink text-xs leading-none"
+              disabled={i === 0}
+              className="h-7 w-7 rounded-md text-romero-gray-3 hover:bg-white hover:text-romero-ink disabled:opacity-30 text-sm"
               aria-label="Subir"
             >
-              ▲
+              ↑
             </button>
             <button
               type="button"
               onClick={() => move(i, 1)}
-              className="text-romero-gray-3 hover:text-romero-ink text-xs leading-none"
+              disabled={i === items.length - 1}
+              className="h-7 w-7 rounded-md text-romero-gray-3 hover:bg-white hover:text-romero-ink disabled:opacity-30 text-sm"
               aria-label="Bajar"
             >
-              ▼
+              ↓
+            </button>
+            <button
+              type="button"
+              onClick={() => remove(i)}
+              className="h-7 w-7 rounded-md text-red-500 hover:bg-red-50 text-sm ml-1"
+              aria-label="Eliminar"
+            >
+              ✕
             </button>
           </div>
+          {/* Textarea grande */}
           <textarea
             value={item}
             onChange={(e) => update(i, e.target.value)}
             placeholder={placeholder}
-            rows={1}
-            className="input flex-1 resize-y min-h-[44px]"
+            rows={3}
+            className="w-full px-3.5 py-3 text-[15px] outline-none resize-y min-h-[80px] bg-white placeholder:text-romero-gray-3 leading-relaxed"
           />
-          <button
-            type="button"
-            onClick={() => remove(i)}
-            className="mt-1 h-9 w-9 shrink-0 rounded-lg text-red-600 hover:bg-red-50"
-            aria-label="Eliminar"
-          >
-            ✕
-          </button>
         </div>
       ))}
-      <button type="button" onClick={add} className="btn-ghost w-full">
+      <button
+        type="button"
+        onClick={add}
+        className="btn-ghost w-full py-3.5 text-[14px]"
+      >
         + {addLabel}
       </button>
     </div>
