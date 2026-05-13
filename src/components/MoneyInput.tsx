@@ -22,14 +22,19 @@ export function MoneyInput({ value, onChange, placeholder, prefix = '$', classNa
   }, [value])
 
   return (
-    <div className={'relative ' + (className ?? '')}>
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-romero-gray-3 font-bold text-sm select-none">
+    <div
+      className={
+        'flex items-center rounded-xl border border-romero-gray-2 bg-white ' +
+        'transition focus-within:border-romero-ink focus-within:ring-4 focus-within:ring-romero-yellow/40 ' +
+        (className ?? '')
+      }
+    >
+      <span className="pl-3.5 pr-1.5 text-[15px] font-semibold text-romero-gray-3 select-none shrink-0">
         {prefix}
       </span>
       <input
         id={id}
         inputMode="numeric"
-        className="input pl-7"
         placeholder={placeholder}
         value={text}
         onChange={(e) => {
@@ -42,6 +47,7 @@ export function MoneyInput({ value, onChange, placeholder, prefix = '$', classNa
           setText(n ? formatNumber(n, 0) : '')
           onChange(n)
         }}
+        className="flex-1 py-3 pr-3.5 text-[15px] outline-none bg-transparent min-w-0"
       />
     </div>
   )
