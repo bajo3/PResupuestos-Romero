@@ -17,27 +17,54 @@ async function downloadPDF(clientName: string, setLoading: (v: boolean) => void)
       import('jspdf'),
     ])
 
-    const canvas = await html2canvas(sheet, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-    })
-
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
     const pageW = pdf.internal.pageSize.getWidth()   // 210mm
     const pageH = pdf.internal.pageSize.getHeight()  // 297mm
+    const marginY = 8                                 // mm — margen superior/inferior
+    const usableH = pageH - marginY * 2
 
-    // Scale canvas to fit page width
-    const imgH = (canvas.height * pageW) / canvas.width
-    let remaining = imgH
-    let offsetY = 0
+    const blocks = Array.from(sheet.children) as HTMLElement[]
+    let cursorY = marginY
+    let isFirst = true
 
-    while (remaining > 0) {
-      if (offsetY > 0) pdf.addPage()
-      pdf.addImage(canvas, 'PNG', 0, -offsetY, pageW, imgH)
-      offsetY += pageH
-      remaining -= pageH
+    for (const block of blocks) {
+      const canvas = await html2canvas(block, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      })
+      const blockH = (canvas.height * pageW) / canvas.width
+
+      // Caso 1: bloque más alto que una página entera → cortarlo manualmente
+      if (blockH > usableH) {
+        if (!isFirst) {
+          pdf.addPage()
+        }
+        let remaining = blockH
+        let offsetY = 0
+        let firstSlice = true
+        while (remaining > 0) {
+          if (!firstSlice) pdf.addPage()
+          pdf.addImage(canvas, 'PNG', 0, marginY - offsetY, pageW, blockH)
+          offsetY += usableH
+          remaining -= usableH
+          firstSlice = false
+        }
+        cursorY = pageH // forzar nueva página para el siguiente bloque
+        isFirst = false
+        continue
+      }
+
+      // Caso 2: no entra en lo que queda de la página actual → nueva página
+      if (cursorY + blockH > pageH - marginY) {
+        pdf.addPage()
+        cursorY = marginY
+      }
+
+      pdf.addImage(canvas, 'PNG', 0, cursorY, pageW, blockH)
+      cursorY += blockH
+      isFirst = false
     }
 
     const safe = (clientName || 'presupuesto').replace(/[^a-zA-Z0-9\s\-áéíóúüñÁÉÍÓÚÜÑ]/g, '').trim()

@@ -5,6 +5,50 @@ interface Props {
   budget: Budget
 }
 
+function RomeroLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 880 185"
+      role="img"
+      aria-label="ROMERO Impermeabilizaciones"
+      className={className}
+      preserveAspectRatio="xMinYMid meet"
+    >
+      <rect x="10" y="26" width="98" height="19" rx="2.5" fill="#0B0B0B" />
+      <rect x="10" y="74" width="98" height="19" rx="2.5" fill="#0B0B0B" />
+      <rect x="10" y="122" width="98" height="19" rx="2.5" fill="#0B0B0B" />
+      <path
+        fill="#0B0B0B"
+        fillRule="evenodd"
+        d="M84 16 H136 C162 16 182 34 182 58 C182 82 162 100 136 100 L160 158 H132 L110 104 V158 H84 Z M110 40 H135 C146 40 154 48 154 58 C154 68 146 76 135 76 H110 Z"
+      />
+      <text
+        x="200"
+        y="120"
+        fontFamily="'Arial Black', 'Inter', sans-serif"
+        fontWeight={900}
+        fontSize={94}
+        letterSpacing={-1}
+        fill="#0B0B0B"
+      >
+        ROMERO
+      </text>
+      <text
+        x="202"
+        y="154"
+        fontFamily="'Arial', 'Inter', sans-serif"
+        fontWeight={700}
+        fontSize={21}
+        letterSpacing={4.5}
+        fill="#0B0B0B"
+      >
+        IMPERMEABILIZACIONES
+      </text>
+    </svg>
+  )
+}
+
 function SectionTitle({ n, label }: { n: string; label: string }) {
   return (
     <div className="flex items-end gap-3 mb-4">
@@ -51,7 +95,7 @@ function Footer({ budget }: { budget: Budget }) {
         <div>
           <div className="text-[9px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Tandil</div>
           <div className="font-semibold">Colectora Macaya 1253</div>
-          <div className="text-white/70">Tandil, B.A.</div>
+          <div className="text-white/70">Tandil</div>
           <div className="text-white/70 mt-0.5">+54 9 2284 59-7150</div>
         </div>
       </div>
@@ -95,12 +139,7 @@ export function BudgetPreview({ budget }: Props) {
           {/* Logo + número */}
           <div className="flex items-start justify-between gap-3">
             <div className="bg-white rounded-xl px-3 py-2.5 shadow-lg shadow-black/20">
-              <img
-                src="/logo-romero.svg"
-                alt="ROMERO Impermeabilizaciones"
-                className="h-9 sm:h-12 w-auto object-contain"
-                style={{ maxWidth: '210px' }}
-              />
+              <RomeroLogo className="h-9 sm:h-12 w-auto" />
             </div>
             <div className="text-right relative z-10 min-w-0">
               <div className="inline-flex items-center gap-1.5 bg-romero-ink/70 rounded-full px-2.5 py-1 mb-1.5 border border-white/10">
