@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Budget, computeTotals } from '../types/budget'
 import { MoneyInput } from './MoneyInput'
 import { EditableList } from './EditableList'
 import { BudgetPreview } from './BudgetPreview'
 import { formatMoney } from '../utils/money'
+import { loadClients, upsertClient } from '../utils/storage'
+import type { ClientRecord } from '../utils/supabase'
 
 interface Props {
   initial: Budget
@@ -37,10 +39,33 @@ function Section({ title, defaultOpen = true, children }: SectionProps) {
 
 export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
   const [b, setB] = useState<Budget>({ ...initial })
+  const [clientSuggestions, setClientSuggestions] = useState<ClientRecord[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const suggestionsRef = useRef<HTMLDivElement>(null)
 
   const set = <K extends keyof Budget>(k: K, v: Budget[K]) => setB((p) => ({ ...p, [k]: v }))
 
   const totals = useMemo(() => computeTotals(b), [b])
+
+  const handleClientInput = (value: string) => {
+    set('client', value)
+    if (value.trim().length < 1) {
+      setClientSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+    const all = loadClients()
+    const filtered = all.filter((c) =>
+      c.name.toLowerCase().includes(value.toLowerCase())
+    )
+    setClientSuggestions(filtered)
+    setShowSuggestions(filtered.length > 0)
+  }
+
+  const applyClient = (c: ClientRecord) => {
+    setB((p) => ({ ...p, client: c.name, address: c.address, propertyType: c.property_type }))
+    setShowSuggestions(false)
+  }
 
   const errors: string[] = []
   if (!b.client.trim()) errors.push('Cliente es obligatorio')
@@ -53,7 +78,18 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
 
   const save = () => {
     if (!canSave) return
-    onSave({ ...b, updatedAt: Date.now() })
+    const updated = { ...b, updatedAt: Date.now() }
+    // Guardar cliente en el registro local + Supabase
+    if (updated.client.trim()) {
+      upsertClient({
+        id: updated.client.trim().toLowerCase().replace(/\s+/g, '-'),
+        name: updated.client.trim(),
+        address: updated.address.trim(),
+        property_type: updated.propertyType.trim(),
+        updated_at: Date.now(),
+      })
+    }
+    onSave(updated)
   }
 
   return (
@@ -120,14 +156,37 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
 
           <Section title="Cliente">
             <div className="grid sm:grid-cols-2 gap-3">
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 relative">
                 <label className="label">Cliente *</label>
                 <input
                   className="input"
                   value={b.client}
-                  onChange={(e) => set('client', e.target.value)}
+                  onChange={(e) => handleClientInput(e.target.value)}
+                  onFocus={() => b.client && setShowSuggestions(clientSuggestions.length > 0)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                   placeholder="Consorcio Castagnino"
+                  autoComplete="off"
                 />
+                {showSuggestions && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border border-romero-gray-2 rounded-xl shadow-lg overflow-hidden"
+                  >
+                    {clientSuggestions.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onMouseDown={() => applyClient(c)}
+                        className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-romero-gray border-b border-romero-gray-2 last:border-0"
+                      >
+                        <div className="font-semibold">{c.name}</div>
+                        {c.address && (
+                          <div className="text-romero-gray-3 text-[12px]">{c.address}</div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="label">Dirección *</label>

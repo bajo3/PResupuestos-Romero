@@ -22,6 +22,7 @@ export interface Budget {
   notes?: string
   createdAt: number
   updatedAt: number
+  archived?: boolean
 }
 
 export const DEFAULT_STAGES: string[] = [

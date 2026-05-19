@@ -27,26 +27,7 @@ export function BudgetList({ budgets, onNew, onView, onEdit, onDuplicate, onDele
   }, [budgets, q])
 
   return (
-    <div className="min-h-screen">
-      {/* Top bar con marca */}
-      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-romero-gray-2">
-        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
-          <div className="bg-romero-yellow rounded-xl p-1.5">
-            <img src="/logo-romero.svg" alt="ROMERO" className="h-8 w-auto object-contain" style={{ maxWidth: '160px' }} />
-          </div>
-          <div className="leading-tight min-w-0">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-romero-gray-3 truncate">
-              Especialistas en Impermeabilización
-            </div>
-            <div className="text-base font-extrabold leading-none">Presupuestos</div>
-          </div>
-          <div className="flex-1" />
-          <span className="text-[11px] font-semibold text-romero-gray-3">
-            {budgets.length} {budgets.length === 1 ? 'registro' : 'registros'}
-          </span>
-        </div>
-      </div>
-
+    <div>
       <div className="mx-auto max-w-2xl px-4 pt-5 pb-28">
         {/* CTA nuevo */}
         <button

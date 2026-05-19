@@ -4,9 +4,10 @@ interface Props {
   onBack: () => void
   onEdit: () => void
   clientName?: string
+  docType?: 'presupuesto' | 'recibo'
 }
 
-async function downloadPDF(clientName: string, setLoading: (v: boolean) => void) {
+async function downloadPDF(clientName: string, docType: string, setLoading: (v: boolean) => void) {
   const sheet = document.querySelector('.sheet') as HTMLElement | null
   if (!sheet) return
 
@@ -25,7 +26,6 @@ async function downloadPDF(clientName: string, setLoading: (v: boolean) => void)
 
     const blocks = Array.from(sheet.children) as HTMLElement[]
     let cursorY = marginY
-    let isFirst = true
 
     for (const block of blocks) {
       const canvas = await html2canvas(block, {
@@ -36,11 +36,9 @@ async function downloadPDF(clientName: string, setLoading: (v: boolean) => void)
       })
       const blockH = (canvas.height * pageW) / canvas.width
 
-      // Caso 1: bloque más alto que una página entera → cortarlo manualmente
+      // Bloque más alto que una página: cortarlo manualmente
       if (blockH > usableH) {
-        if (!isFirst) {
-          pdf.addPage()
-        }
+        if (cursorY > marginY) pdf.addPage()
         let remaining = blockH
         let offsetY = 0
         let firstSlice = true
@@ -51,12 +49,11 @@ async function downloadPDF(clientName: string, setLoading: (v: boolean) => void)
           remaining -= usableH
           firstSlice = false
         }
-        cursorY = pageH // forzar nueva página para el siguiente bloque
-        isFirst = false
+        cursorY = pageH
         continue
       }
 
-      // Caso 2: no entra en lo que queda de la página actual → nueva página
+      // No entra en lo que queda: nueva página
       if (cursorY + blockH > pageH - marginY) {
         pdf.addPage()
         cursorY = marginY
@@ -64,17 +61,16 @@ async function downloadPDF(clientName: string, setLoading: (v: boolean) => void)
 
       pdf.addImage(canvas, 'PNG', 0, cursorY, pageW, blockH)
       cursorY += blockH
-      isFirst = false
     }
 
-    const safe = (clientName || 'presupuesto').replace(/[^a-zA-Z0-9\s\-áéíóúüñÁÉÍÓÚÜÑ]/g, '').trim()
-    pdf.save(`presupuesto-${safe || 'romero'}.pdf`)
+    const safe = (clientName || 'cliente').replace(/[^a-zA-Z0-9\s\-áéíóúüñÁÉÍÓÚÜÑ]/g, '').trim()
+    pdf.save(`${docType}-${safe || 'romero'}.pdf`)
   } finally {
     setLoading(false)
   }
 }
 
-export function PrintActions({ onBack, onEdit, clientName = '' }: Props) {
+export function PrintActions({ onBack, onEdit, clientName = '', docType = 'presupuesto' }: Props) {
   const [loading, setLoading] = useState(false)
 
   return (
@@ -94,7 +90,7 @@ export function PrintActions({ onBack, onEdit, clientName = '' }: Props) {
           <span className="hidden sm:inline">🖨 </span>Imprimir
         </button>
         <button
-          onClick={() => downloadPDF(clientName, setLoading)}
+          onClick={() => downloadPDF(clientName, docType, setLoading)}
           disabled={loading}
           className="btn-yellow py-2 text-[13px] min-w-[110px] flex items-center justify-center gap-1.5"
         >
