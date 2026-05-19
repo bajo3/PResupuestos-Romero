@@ -5,6 +5,50 @@ interface Props {
   budget: Budget
 }
 
+function RomeroLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 880 185"
+      role="img"
+      aria-label="ROMERO Impermeabilizaciones"
+      className={className}
+      preserveAspectRatio="xMinYMid meet"
+    >
+      <rect x="10" y="26" width="98" height="19" rx="2.5" fill="#0B0B0B" />
+      <rect x="10" y="74" width="98" height="19" rx="2.5" fill="#0B0B0B" />
+      <rect x="10" y="122" width="98" height="19" rx="2.5" fill="#0B0B0B" />
+      <path
+        fill="#0B0B0B"
+        fillRule="evenodd"
+        d="M84 16 H136 C162 16 182 34 182 58 C182 82 162 100 136 100 L160 158 H132 L110 104 V158 H84 Z M110 40 H135 C146 40 154 48 154 58 C154 68 146 76 135 76 H110 Z"
+      />
+      <text
+        x="200"
+        y="120"
+        fontFamily="'Arial Black', 'Inter', sans-serif"
+        fontWeight={900}
+        fontSize={94}
+        letterSpacing={-1}
+        fill="#0B0B0B"
+      >
+        ROMERO
+      </text>
+      <text
+        x="202"
+        y="154"
+        fontFamily="'Arial', 'Inter', sans-serif"
+        fontWeight={700}
+        fontSize={21}
+        letterSpacing={4.5}
+        fill="#0B0B0B"
+      >
+        IMPERMEABILIZACIONES
+      </text>
+    </svg>
+  )
+}
+
 function SectionTitle({ n, label }: { n: string; label: string }) {
   return (
     <div className="flex items-end gap-3 mb-4">
@@ -21,45 +65,41 @@ function SectionTitle({ n, label }: { n: string; label: string }) {
 
 function Footer({ budget }: { budget: Budget }) {
   return (
-    <footer className="avoid-break -mx-6 sm:-mx-10 print:mx-0 mt-10 bg-romero-ink text-white px-5 sm:px-10 py-6 rounded-b-2xl print:rounded-none">
+    <footer
+      className="avoid-break mt-10 text-white rounded-b-2xl print:rounded-none"
+      style={{ backgroundColor: '#0B0B0B', padding: '24px 40px' }}
+    >
       {/* Marca */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="h-1.5 w-8 bg-romero-yellow rounded-full" />
-        <div className="text-[10px] font-extrabold uppercase tracking-[0.26em] text-romero-yellow">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ height: '6px', width: '32px', backgroundColor: '#F5C800', borderRadius: '999px' }} />
+        <div style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.26em', color: '#F5C800' }}>
           ROMERO Impermeabilizaciones
         </div>
       </div>
 
-      {/* Contactos — 2 columnas en mobile, 3 en sm */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-[12px] leading-relaxed">
-        {/* Contacto principal */}
-        <div className="col-span-2 sm:col-span-1">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Web</div>
-          <div className="font-semibold text-[11px] sm:text-[12px]">impermeabilizacionesromero.com</div>
-          <div className="text-white/70 mt-1">+54 9 2284 59-7150</div>
-        </div>
-
-        {/* Buenos Aires */}
+      {/* Contactos — siempre 3 columnas (PDF-safe) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', fontSize: '12px', lineHeight: 1.6, color: 'rgba(255,255,255,0.7)' }}>
         <div>
-          <div className="text-[9px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Buenos Aires</div>
-          <div className="font-semibold">Emilio Frers 1126</div>
-          <div className="text-white/70">Martínez, B.A.</div>
-          <div className="text-white/70 mt-0.5">+54 9 2284 59-7150</div>
+          <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Web</div>
+          <div style={{ fontWeight: 600, color: 'white' }}>impermeabilizacionesromero.com</div>
+          <div>+54 9 2494 60-1118</div>
         </div>
-
-        {/* Tandil */}
         <div>
-          <div className="text-[9px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Tandil</div>
-          <div className="font-semibold">Colectora Macaya 1253</div>
-          <div className="text-white/70">Tandil, B.A.</div>
-          <div className="text-white/70 mt-0.5">+54 9 2284 59-7150</div>
+          <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Buenos Aires</div>
+          <div style={{ fontWeight: 600, color: 'white' }}>Colectora Macaya 1253</div>
+          <div>+54 9 11 3065-7729</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Tandil</div>
+          <div style={{ fontWeight: 600, color: 'white' }}>Tandil</div>
+          <div>+54 9 2494 60-1118</div>
         </div>
       </div>
 
       {/* Barra inferior */}
-      <div className="mt-5 pt-4 border-t border-white/10">
-        <p className="text-[10px] uppercase tracking-[0.15em] text-white/40 leading-relaxed">
-          Pres. N° {budget.number || '—'} &nbsp;·&nbsp; Aplicador homologado CE &nbsp;·&nbsp; Revestech
+      <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
+          Pres. N° {budget.number || '—'} &nbsp;·&nbsp; Revestech &nbsp;·&nbsp; Aplicador homologado CE
         </p>
       </div>
     </footer>
@@ -94,37 +134,35 @@ export function BudgetPreview({ budget }: Props) {
         <div className="relative px-5 sm:px-10 pt-7 pb-8">
           {/* Logo + número */}
           <div className="flex items-start justify-between gap-3">
-            <div className="bg-white rounded-xl px-3 py-2.5 shadow-lg shadow-black/20">
-              <img
-                src="/logo-romero.svg"
-                alt="ROMERO Impermeabilizaciones"
-                className="h-9 sm:h-12 w-auto object-contain"
-                style={{ maxWidth: '210px' }}
-              />
+            <div className="bg-romero-yellow rounded-xl px-3 py-2.5 shadow-lg shadow-black/20">
+              <RomeroLogo className="h-9 sm:h-12 w-auto" />
             </div>
-            <div className="text-right relative z-10 min-w-0">
-              <div className="inline-flex items-center gap-1.5 bg-romero-ink/70 rounded-full px-2.5 py-1 mb-1.5 border border-white/10">
+            <div
+              className="relative z-10 rounded-2xl px-4 py-3 text-right shadow-xl shadow-black/40"
+              style={{ backgroundColor: '#0B0B0B', border: '1px solid rgba(255,255,255,0.15)' }}
+            >
+              <div className="flex items-center justify-end gap-1.5 mb-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-romero-yellow shrink-0" />
-                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/80 truncate">
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.8)' }}>
                   N° de presupuesto
                 </span>
               </div>
-              <div className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white drop-shadow-sm break-all">
+              <div
+                className="font-display text-2xl sm:text-4xl font-bold tracking-tight leading-none"
+                style={{ color: '#ffffff' }}
+              >
                 {budget.number || '—'}
               </div>
             </div>
           </div>
 
-          {/* Tagline + título */}
+          {/* Título + tagline */}
           <div className="mt-6 relative z-10">
-            <div className="text-[9px] sm:text-[11px] font-bold uppercase tracking-[0.28em] text-romero-yellow">
-              Especialistas en Impermeabilización
-            </div>
-            <h1 className="font-display mt-1.5 text-[34px] sm:text-[56px] font-bold leading-[0.95] tracking-tight">
+            <h1 className="font-display text-[34px] sm:text-[56px] font-bold leading-[0.95] tracking-tight">
               PRESUPUESTO
             </h1>
-            <div className="mt-1.5 text-[11px] text-white/55">
-              Soluciones profesionales · Sistema integral llave en mano
+            <div className="mt-2 text-[11px] sm:text-[13px] font-bold uppercase tracking-[0.28em] text-romero-yellow">
+              Especialistas en impermeabilización
             </div>
           </div>
 
@@ -137,12 +175,12 @@ export function BudgetPreview({ budget }: Props) {
             ].map(({ label, value }) => (
               <div
                 key={label}
-                className="bg-white/10 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 border border-white/10"
+                className="bg-romero-ink rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 border border-white/15 shadow-md shadow-black/30"
               >
-                <div className="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-white/50">
+                <div className="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-romero-yellow">
                   {label}
                 </div>
-                <div className="text-[11px] sm:text-[13px] font-bold leading-tight mt-0.5 break-words">
+                <div className="text-[11px] sm:text-[13px] font-bold leading-tight mt-0.5 text-white break-words">
                   {value}
                 </div>
               </div>
@@ -211,7 +249,7 @@ export function BudgetPreview({ budget }: Props) {
             <ol className="space-y-2.5 text-[13px] sm:text-[13.5px] leading-snug">
               {budget.stages.map((s, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="shrink-0 mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-romero-ink text-white text-[11px] font-bold font-display">
+                  <span className="shrink-0 mt-0.5 h-6 w-6 grid place-items-center rounded-md bg-romero-ink text-white text-[11px] font-bold tabular-nums" style={{ lineHeight: 1 }}>
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <span className="pt-0.5">{s}</span>
@@ -225,22 +263,24 @@ export function BudgetPreview({ budget }: Props) {
             <ul className="space-y-2.5 text-[13px] sm:text-[13.5px] leading-snug">
               {budget.materials.map((m, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="shrink-0 mt-1 inline-flex h-5 w-5 items-center justify-center rounded-md bg-romero-yellow text-romero-ink text-[12px] font-bold">
-                    ✓
+                  <span className="shrink-0 mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-romero-yellow text-romero-ink">
+                    <svg
+                      viewBox="0 0 16 16"
+                      className="h-3 w-3"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={3}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <polyline points="3 8.5 6.5 12 13 4.5" />
+                    </svg>
                   </span>
                   <span className="pt-0.5">{m}</span>
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex items-center gap-3 rounded-xl bg-romero-gray border border-romero-gray-2 px-3 py-2.5">
-              <div className="h-8 w-8 shrink-0 rounded-md bg-romero-ink text-romero-yellow grid place-items-center text-[10px] font-extrabold tracking-wider">
-                CE
-              </div>
-              <div className="text-[12px] leading-tight">
-                <div className="font-bold">Aplicador homologado</div>
-                <div className="text-romero-gray-3">por la Comunidad Europea · Revestech</div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -311,26 +351,26 @@ export function BudgetPreview({ budget }: Props) {
           {/* Anticipo / Finalización */}
           <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-romero-gray-2">
             <div className="p-4 sm:p-5">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-romero-gray-3">Anticipo</div>
-                <span className="text-[11px] font-bold bg-romero-ink text-white rounded-full px-2 py-0.5">
+                <span className="shrink-0 inline-flex items-center justify-center h-5 min-w-[2rem] px-2 text-[11px] font-bold bg-romero-ink text-white rounded-full tabular-nums">
                   {budget.advancePct}%
                 </span>
               </div>
-              <div className="font-display font-bold text-[22px] sm:text-2xl">{formatMoney(t.advance)}</div>
+              <div className="font-display font-bold text-[22px] sm:text-2xl leading-none">{formatMoney(t.advance)}</div>
               <div className="mt-2.5 h-1.5 rounded-full bg-romero-gray-2 overflow-hidden">
                 <div className="h-full bg-romero-ink" style={{ width: `${budget.advancePct}%` }} />
               </div>
               <div className="text-[11px] text-romero-gray-3 mt-1.5">Con fecha de inicio a coordinar.</div>
             </div>
             <div className="p-4 sm:p-5 bg-romero-yellow/15">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-romero-ink/70">Finalización</div>
-                <span className="text-[11px] font-bold bg-romero-yellow text-romero-ink rounded-full px-2 py-0.5">
+                <span className="shrink-0 inline-flex items-center justify-center h-5 min-w-[2rem] px-2 text-[11px] font-bold bg-romero-yellow text-romero-ink rounded-full tabular-nums">
                   {budget.finalPct}%
                 </span>
               </div>
-              <div className="font-display font-bold text-[22px] sm:text-2xl">{formatMoney(t.final)}</div>
+              <div className="font-display font-bold text-[22px] sm:text-2xl leading-none">{formatMoney(t.final)}</div>
               <div className="mt-2.5 h-1.5 rounded-full bg-romero-yellow-deep/30 overflow-hidden">
                 <div className="h-full bg-romero-yellow-deep" style={{ width: `${budget.finalPct}%` }} />
               </div>
