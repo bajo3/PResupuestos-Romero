@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Receipt, PaymentMethod, makeEmptyReceipt } from '../types/receipt'
+import { Receipt, PaymentMethod } from '../types/receipt'
 import { Budget, computeTotals } from '../types/budget'
 import { MoneyInput } from './MoneyInput'
 import { formatMoney } from '../utils/money'
