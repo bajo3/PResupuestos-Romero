@@ -9,8 +9,10 @@ export interface Budget {
   deliveryTime: string
   workTitle: string
   description: string
+  pricingMode: 'per_m2' | 'fixed'
   squareMeters: number
   pricePerM2: number
+  fixedPrice: number
   advancePct: number
   finalPct: number
   vatIncluded: boolean
@@ -66,8 +68,10 @@ export function makeEmptyBudget(): Budget {
     workTitle: 'Sistema de Impermeabilización Profesional',
     description:
       'Provisión y ejecución de sistema de impermeabilización profesional, mediante colocación de membrana ECO DRY Revestech aplicada sobre la superficie indicada.',
+    pricingMode: 'per_m2',
     squareMeters: 0,
     pricePerM2: 0,
+    fixedPrice: 0,
     advancePct: 70,
     finalPct: 30,
     vatIncluded: false,
@@ -112,7 +116,10 @@ export interface Totals {
 }
 
 export function computeTotals(b: Budget): Totals {
-  const subtotal = (b.squareMeters || 0) * (b.pricePerM2 || 0)
+  const subtotal =
+    b.pricingMode === 'fixed'
+      ? b.fixedPrice || 0
+      : (b.squareMeters || 0) * (b.pricePerM2 || 0)
   let vat = 0
   let total = subtotal
   if (b.applyVat) {

@@ -70,8 +70,12 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
   const errors: string[] = []
   if (!b.client.trim()) errors.push('Cliente es obligatorio')
   if (!b.address.trim()) errors.push('Dirección es obligatoria')
-  if (!(b.squareMeters > 0)) errors.push('m² debe ser mayor a 0')
-  if (!(b.pricePerM2 > 0)) errors.push('Precio por m² debe ser mayor a 0')
+  if (b.pricingMode === 'per_m2') {
+    if (!(b.squareMeters > 0)) errors.push('m² debe ser mayor a 0')
+    if (!(b.pricePerM2 > 0)) errors.push('Precio por m² debe ser mayor a 0')
+  } else {
+    if (!(b.fixedPrice > 0)) errors.push('Precio total debe ser mayor a 0')
+  }
   if (b.advancePct + b.finalPct !== 100) errors.push('Anticipo + finalización debe sumar 100%')
 
   const canSave = errors.length === 0
@@ -232,25 +236,56 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
 
           <Section title="Cálculo económico">
             <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className="label">Metros cuadrados</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  className="input"
-                  value={b.squareMeters || ''}
-                  onChange={(e) => set('squareMeters', Number(e.target.value) || 0)}
-                  placeholder="200"
-                />
+              {/* Toggle modo de precio */}
+              <div className="sm:col-span-2 flex rounded-xl overflow-hidden border border-romero-gray-2 text-sm font-semibold">
+                <button
+                  type="button"
+                  onClick={() => set('pricingMode', 'per_m2')}
+                  className={`flex-1 py-2.5 transition-colors ${b.pricingMode === 'per_m2' ? 'bg-romero-ink text-white' : 'bg-romero-gray text-romero-gray-3 hover:text-romero-ink'}`}
+                >
+                  Precio por m²
+                </button>
+                <button
+                  type="button"
+                  onClick={() => set('pricingMode', 'fixed')}
+                  className={`flex-1 py-2.5 transition-colors ${b.pricingMode === 'fixed' ? 'bg-romero-ink text-white' : 'bg-romero-gray text-romero-gray-3 hover:text-romero-ink'}`}
+                >
+                  Precio fijo
+                </button>
               </div>
-              <div>
-                <label className="label">Precio por m²</label>
-                <MoneyInput
-                  value={b.pricePerM2}
-                  onChange={(n) => set('pricePerM2', n)}
-                  placeholder="69.000"
-                />
-              </div>
+
+              {b.pricingMode === 'per_m2' ? (
+                <>
+                  <div>
+                    <label className="label">Metros cuadrados</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      className="input"
+                      value={b.squareMeters || ''}
+                      onChange={(e) => set('squareMeters', Number(e.target.value) || 0)}
+                      placeholder="200"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">Precio por m²</label>
+                    <MoneyInput
+                      value={b.pricePerM2}
+                      onChange={(n) => set('pricePerM2', n)}
+                      placeholder="69.000"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="sm:col-span-2">
+                  <label className="label">Precio total</label>
+                  <MoneyInput
+                    value={b.fixedPrice}
+                    onChange={(n) => set('fixedPrice', n)}
+                    placeholder="500.000"
+                  />
+                </div>
+              )}
               <div>
                 <label className="label">Anticipo (%)</label>
                 <input

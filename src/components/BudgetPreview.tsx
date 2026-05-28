@@ -77,22 +77,15 @@ function Footer({ budget }: { budget: Budget }) {
         </div>
       </div>
 
-      {/* Contactos — siempre 3 columnas (PDF-safe) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', fontSize: '12px', lineHeight: 1.6, color: 'rgba(255,255,255,0.7)' }}>
+      {/* Contactos */}
+      <div style={{ display: 'flex', gap: '40px', fontSize: '12px', lineHeight: 1.6, color: 'rgba(255,255,255,0.7)' }}>
         <div>
           <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Web</div>
           <div style={{ fontWeight: 600, color: 'white' }}>impermeabilizacionesromero.com</div>
-          <div>+54 9 2494 60-1118</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Buenos Aires</div>
-          <div style={{ fontWeight: 600, color: 'white' }}>Colectora Macaya 1253</div>
-          <div>+54 9 11 3065-7729</div>
         </div>
         <div>
           <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Tandil</div>
-          <div style={{ fontWeight: 600, color: 'white' }}>Tandil</div>
-          <div>+54 9 2494 60-1118</div>
+          <div style={{ fontWeight: 600, color: 'white' }}>+54 9 2494 60-1118</div>
         </div>
       </div>
 
@@ -190,39 +183,43 @@ export function BudgetPreview({ budget }: Props) {
       </header>
 
       {/* ============ CLIENTE ============ */}
-      <section className="avoid-break px-5 sm:px-10 pt-7">
-        <div className="grid sm:grid-cols-[1.4fr_1fr] gap-4">
+      <section style={{ padding: '28px 40px 16px' }}>
+        <div style={{ display: 'flex', gap: '16px' }}>
           {/* Nombre + datos */}
-          <div className="relative pl-4 sm:pl-5">
-            <span className="absolute left-0 top-1 bottom-1 w-1.5 rounded-full bg-romero-yellow" />
-            <div className="text-[10px] font-extrabold uppercase tracking-[0.26em] text-romero-gray-3">
+          <div style={{ position: 'relative', paddingLeft: '20px', width: '58%', flexShrink: 0 }}>
+            <span style={{ position: 'absolute', left: 0, top: '4px', bottom: '4px', width: '6px', borderRadius: '999px', backgroundColor: '#FFD60A' }} />
+            <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.26em', color: '#9CA3AF' }}>
               Presentado a
             </div>
-            <div className="font-display text-2xl sm:text-[34px] font-bold tracking-tight leading-tight mt-1 break-words">
+            <div style={{ fontSize: '30px', fontWeight: 700, lineHeight: 1.1, marginTop: '4px', wordBreak: 'break-word' }}>
               {budget.client || '—'}
             </div>
-            <div className="mt-2.5 flex flex-col sm:flex-row flex-wrap gap-y-1 gap-x-5 text-[13px]">
-              <div>
-                <span className="text-romero-gray-3">Dirección · </span>
-                <span className="font-semibold">{budget.address || '—'}</span>
+            <div style={{ marginTop: '10px', fontSize: '13px' }}>
+              <div style={{ marginBottom: '4px' }}>
+                <span style={{ color: '#9CA3AF' }}>Dirección · </span>
+                <span style={{ fontWeight: 600 }}>{budget.address || '—'}</span>
               </div>
               <div>
-                <span className="text-romero-gray-3">Inmueble · </span>
-                <span className="font-semibold">{budget.propertyType || '—'}</span>
+                <span style={{ color: '#9CA3AF' }}>Inmueble · </span>
+                <span style={{ fontWeight: 600 }}>{budget.propertyType || '—'}</span>
               </div>
             </div>
           </div>
 
           {/* Resumen rápido */}
-          <div className="card p-4 bg-romero-gray border-romero-gray-2">
+          <div className="card p-4 bg-romero-gray border-romero-gray-2" style={{ width: '42%' }}>
             <div className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-romero-gray-3 mb-2">
               Resumen de obra
             </div>
             <div className="grid grid-cols-2 gap-y-2 text-[13px]">
-              <span className="text-romero-gray-3">Superficie</span>
-              <span className="text-right font-bold">{formatNumber(budget.squareMeters)} m²</span>
-              <span className="text-romero-gray-3">Precio / m²</span>
-              <span className="text-right font-bold text-[12px]">{formatMoney(budget.pricePerM2)}</span>
+              {budget.pricingMode === 'per_m2' && (
+                <>
+                  <span className="text-romero-gray-3">Superficie</span>
+                  <span className="text-right font-bold">{formatNumber(budget.squareMeters)} m²</span>
+                  <span className="text-romero-gray-3">Precio / m²</span>
+                  <span className="text-right font-bold text-[12px]">{formatMoney(budget.pricePerM2)}</span>
+                </>
+              )}
               <span className="font-semibold">Total</span>
               <span className="text-right font-extrabold text-[12px]">{formatMoney(t.total)}</span>
             </div>
@@ -231,7 +228,7 @@ export function BudgetPreview({ budget }: Props) {
       </section>
 
       {/* ============ TIPO DE TRABAJO ============ */}
-      <section className="avoid-break px-5 sm:px-10 pt-9">
+      <section className="avoid-break px-5 sm:px-10 pt-9 pb-4">
         <SectionTitle n="01" label="Tipo de trabajo" />
         <h2 className="font-display text-xl sm:text-[26px] font-bold tracking-tight leading-tight mb-3">
           {budget.workTitle}
@@ -242,14 +239,14 @@ export function BudgetPreview({ budget }: Props) {
       </section>
 
       {/* ============ ETAPAS + MATERIALES ============ */}
-      <section className="avoid-break px-5 sm:px-10 pt-9">
+      <section className="avoid-break px-5 sm:px-10 pt-9 pb-4">
         <div className="grid sm:grid-cols-2 gap-5 sm:gap-6">
           <div>
             <SectionTitle n="02" label="Etapas de obra" />
             <ol className="space-y-2.5 text-[13px] sm:text-[13.5px] leading-snug">
               {budget.stages.map((s, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="shrink-0 mt-0.5 h-6 w-6 grid place-items-center rounded-md bg-romero-ink text-white text-[11px] font-bold tabular-nums" style={{ lineHeight: 1 }}>
+                  <span style={{ flexShrink: 0, display: 'inline-block', width: '24px', textAlign: 'center', padding: '4px 0', borderRadius: '6px', backgroundColor: '#0B0B0B', color: 'white', fontSize: '11px', fontWeight: 700, lineHeight: 1 }}>
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <span className="pt-0.5">{s}</span>
@@ -286,42 +283,51 @@ export function BudgetPreview({ budget }: Props) {
       </section>
 
       {/* ============ RESUMEN ECONÓMICO ============ */}
-      <section className="avoid-break px-5 sm:px-10 pt-9">
+      <section className="avoid-break px-5 sm:px-10 pt-9 pb-4">
         <SectionTitle n="04" label="Resumen económico" />
 
         <div className="rounded-2xl border border-romero-gray-2 overflow-hidden bg-white">
 
           {/* m² / precio / subtotal — en mobile se convierte en tabla vertical */}
-          <div className="hidden sm:grid grid-cols-3 divide-x divide-romero-gray-2 bg-romero-gray">
-            <div className="p-4">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-romero-gray-3">Superficie</div>
-              <div className="font-display font-bold text-xl mt-0.5">
-                {formatNumber(budget.squareMeters)} <span className="text-sm text-romero-gray-3">m²</span>
+          {budget.pricingMode === 'per_m2' ? (
+            <>
+              <div className="hidden sm:grid grid-cols-3 divide-x divide-romero-gray-2 bg-romero-gray">
+                <div className="p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-romero-gray-3">Superficie</div>
+                  <div className="font-display font-bold text-xl mt-0.5">
+                    {formatNumber(budget.squareMeters)} <span className="text-sm text-romero-gray-3">m²</span>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-romero-gray-3">Precio / m²</div>
+                  <div className="font-display font-bold text-xl mt-0.5">{formatMoney(budget.pricePerM2)}</div>
+                </div>
+                <div className="p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-romero-gray-3">Subtotal</div>
+                  <div className="font-display font-bold text-xl mt-0.5">{formatMoney(t.subtotal)}</div>
+                </div>
+              </div>
+              <div className="sm:hidden bg-romero-gray divide-y divide-romero-gray-2">
+                {[
+                  { label: 'Superficie', value: `${formatNumber(budget.squareMeters)} m²` },
+                  { label: 'Precio / m²', value: formatMoney(budget.pricePerM2) },
+                  { label: 'Subtotal', value: formatMoney(t.subtotal) },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-romero-gray-3">{label}</span>
+                    <span className="font-display font-bold text-[15px]">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="bg-romero-gray">
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-romero-gray-3">Precio total</span>
+                <span className="font-display font-bold text-[15px]">{formatMoney(t.subtotal)}</span>
               </div>
             </div>
-            <div className="p-4">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-romero-gray-3">Precio / m²</div>
-              <div className="font-display font-bold text-xl mt-0.5">{formatMoney(budget.pricePerM2)}</div>
-            </div>
-            <div className="p-4">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-romero-gray-3">Subtotal</div>
-              <div className="font-display font-bold text-xl mt-0.5">{formatMoney(t.subtotal)}</div>
-            </div>
-          </div>
-
-          {/* Mobile: lista compacta */}
-          <div className="sm:hidden bg-romero-gray divide-y divide-romero-gray-2">
-            {[
-              { label: 'Superficie', value: `${formatNumber(budget.squareMeters)} m²` },
-              { label: 'Precio / m²', value: formatMoney(budget.pricePerM2) },
-              { label: 'Subtotal', value: formatMoney(t.subtotal) },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-romero-gray-3">{label}</span>
-                <span className="font-display font-bold text-[15px]">{value}</span>
-              </div>
-            ))}
-          </div>
+          )}
 
           {budget.applyVat && (
             <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-romero-gray-2 text-sm">
@@ -353,7 +359,7 @@ export function BudgetPreview({ budget }: Props) {
             <div className="p-4 sm:p-5">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-romero-gray-3">Anticipo</div>
-                <span className="shrink-0 inline-flex items-center justify-center h-5 min-w-[2rem] px-2 text-[11px] font-bold bg-romero-ink text-white rounded-full tabular-nums">
+                <span style={{ display: 'inline-block', minWidth: '2rem', padding: '2px 8px', fontSize: '11px', fontWeight: 700, backgroundColor: '#0B0B0B', color: 'white', borderRadius: '999px', textAlign: 'center', lineHeight: '20px' }}>
                   {budget.advancePct}%
                 </span>
               </div>
@@ -366,7 +372,7 @@ export function BudgetPreview({ budget }: Props) {
             <div className="p-4 sm:p-5 bg-romero-yellow/15">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-romero-ink/70">Finalización</div>
-                <span className="shrink-0 inline-flex items-center justify-center h-5 min-w-[2rem] px-2 text-[11px] font-bold bg-romero-yellow text-romero-ink rounded-full tabular-nums">
+                <span style={{ display: 'inline-block', minWidth: '2rem', padding: '2px 8px', fontSize: '11px', fontWeight: 700, backgroundColor: '#FFD60A', color: '#0B0B0B', borderRadius: '999px', textAlign: 'center', lineHeight: '20px' }}>
                   {budget.finalPct}%
                 </span>
               </div>

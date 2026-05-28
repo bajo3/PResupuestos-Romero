@@ -88,7 +88,12 @@ export function loadBudgets(): Budget[] {
     const raw = localStorage.getItem(KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Budget[]
-      if (Array.isArray(parsed)) return parsed
+      if (Array.isArray(parsed))
+        return parsed.map((b) => ({
+          fixedPrice: 0,
+          pricingMode: 'per_m2' as const,
+          ...b,
+        }))
     }
   } catch { /* ignore */ }
   return []
