@@ -11,12 +11,12 @@ interface Props {
 }
 
 export function MoneyInput({ value, onChange, placeholder, prefix = '$', className, id }: Props) {
-  const [text, setText] = useState<string>(value ? formatNumber(value, 0) : '')
+  const [text, setText] = useState<string>(value === 0 ? '' : formatNumber(value, 0))
 
   useEffect(() => {
     const parsedCurrent = parseNumber(text)
     if (parsedCurrent !== value) {
-      setText(value ? formatNumber(value, 0) : '')
+      setText(value === 0 ? '' : formatNumber(value, 0))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
@@ -44,7 +44,7 @@ export function MoneyInput({ value, onChange, placeholder, prefix = '$', classNa
         }}
         onBlur={() => {
           const n = parseNumber(text)
-          setText(n ? formatNumber(n, 0) : '')
+          setText(text.trim() === '' ? '' : formatNumber(n, 0))
           onChange(n)
         }}
         className="flex-1 py-3 pr-3.5 text-[15px] outline-none bg-transparent min-w-0"

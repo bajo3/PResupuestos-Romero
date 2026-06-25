@@ -18,6 +18,13 @@ async function openNewForm(page: Page) {
   await expect(page.getByText('Datos del presupuesto')).toBeVisible({ timeout: 8_000 })
 }
 
+async function openNewReceiptForm(page: Page) {
+  await goHome(page)
+  await page.getByRole('button', { name: 'Recibos' }).click()
+  await page.getByText('+ Nuevo recibo').click()
+  await expect(page.getByText('Datos del recibo')).toBeVisible({ timeout: 8_000 })
+}
+
 // ──────────────────────────────────────────────
 // HOME
 // ──────────────────────────────────────────────
@@ -199,6 +206,29 @@ test.describe('Formulario de presupuesto', () => {
     await expect(page.getByText('Cliente Test').first()).toBeVisible()
   })
 
+  test('permite guardar presupuesto con total $0', async ({ page }) => {
+    await openNewForm(page)
+
+    await page.getByPlaceholder('Consorcio Castagnino').fill('Cliente Cero')
+    await page.getByPlaceholder('Paz 1333').fill('Direccion 0')
+    await page.getByPlaceholder('200').fill('100')
+
+    const moneyInput = page.locator('div.flex.items-center').filter({
+      has: page.locator('span', { hasText: /^\$$/ }),
+    }).first().locator('input')
+    await moneyInput.fill('0')
+    await moneyInput.blur()
+    await expect(moneyInput).toHaveValue('0')
+
+    const guardar = page.getByRole('button', { name: 'Guardar' }).first()
+    await expect(guardar).toBeEnabled({ timeout: 5_000 })
+    await guardar.click()
+
+    await expect(page.getByRole('heading', { name: 'PRESUPUESTO', exact: true })).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText('Cliente Cero').first()).toBeVisible()
+    await expect(page.getByText('$ 0,00').first()).toBeVisible()
+  })
+
   test('cálculo automático: 100 m² x $50.000 = $5.000.000', async ({ page }) => {
     await openNewForm(page)
 
@@ -239,6 +269,31 @@ test.describe('Formulario de presupuesto', () => {
 // ──────────────────────────────────────────────
 // ACCIONES DE LISTA
 // ──────────────────────────────────────────────
+test.describe('Formulario de recibo', () => {
+  test('permite guardar recibo con monto $0', async ({ page }) => {
+    await openNewReceiptForm(page)
+
+    await page.getByPlaceholder('Consorcio Castagnino').fill('Cliente Recibo Cero')
+
+    const moneyInput = page.locator('div.flex.items-center').filter({
+      has: page.locator('span', { hasText: /^\$$/ }),
+    }).first().locator('input')
+    await moneyInput.fill('0')
+    await moneyInput.blur()
+    await expect(moneyInput).toHaveValue('0')
+
+    await page.getByPlaceholder(/Anticipo presupuesto/).fill('Recibo sin cargo')
+
+    const guardar = page.getByRole('button', { name: 'Guardar' }).first()
+    await expect(guardar).toBeEnabled({ timeout: 5_000 })
+    await guardar.click()
+
+    await expect(page.getByText('RECIBO', { exact: true })).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText('Cliente Recibo Cero').first()).toBeVisible()
+    await expect(page.getByText('$ 0,00').first()).toBeVisible()
+  })
+})
+
 test.describe('Acciones de lista', () => {
   test('Duplicar crea una segunda card', async ({ page }) => {
     await goHome(page)

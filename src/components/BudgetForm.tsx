@@ -72,9 +72,9 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
   if (!b.address.trim()) errors.push('Dirección es obligatoria')
   if (b.pricingMode === 'per_m2') {
     if (!(b.squareMeters > 0)) errors.push('m² debe ser mayor a 0')
-    if (!(b.pricePerM2 > 0)) errors.push('Precio por m² debe ser mayor a 0')
+    if (!(Number.isFinite(b.pricePerM2) && b.pricePerM2 >= 0)) errors.push('Precio por m² no puede ser negativo')
   } else {
-    if (!(b.fixedPrice > 0)) errors.push('Precio total debe ser mayor a 0')
+    if (!(Number.isFinite(b.fixedPrice) && b.fixedPrice >= 0)) errors.push('Precio total no puede ser negativo')
   }
   if (b.advancePct + b.finalPct !== 100) errors.push('Anticipo + finalización debe sumar 100%')
 

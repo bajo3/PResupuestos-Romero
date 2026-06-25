@@ -62,7 +62,7 @@ export function ReceiptForm({ initial, budgets, onCancel, onSave }: Props) {
 
   const errors: string[] = []
   if (!r.client.trim()) errors.push('Cliente es obligatorio')
-  if (!(r.amount > 0)) errors.push('El monto debe ser mayor a 0')
+  if (!(Number.isFinite(r.amount) && r.amount >= 0)) errors.push('El monto no puede ser negativo')
   if (!r.concept.trim()) errors.push('El concepto es obligatorio')
   const canSave = errors.length === 0
 
@@ -231,7 +231,7 @@ export function ReceiptForm({ initial, budgets, onCancel, onSave }: Props) {
         </div>
 
         {/* Resumen */}
-        {r.amount > 0 && (
+        {r.amount >= 0 && r.concept.trim() && (
           <div className="card p-4 bg-romero-gray border-romero-gray-2">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-romero-gray-3 mb-2">
               Resumen del recibo
