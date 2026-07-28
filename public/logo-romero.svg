@@ -1,37 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 185" overflow="visible" role="img" aria-label="ROMERO Impermeabilizaciones">
-  <!-- Tres barras horizontales (≡) — van de x=10 a x=108, se superponen con el tronco de la R -->
-  <rect x="10" y="26"  width="98" height="19" rx="2.5" fill="#0B0B0B"/>
-  <rect x="10" y="74"  width="98" height="19" rx="2.5" fill="#0B0B0B"/>
-  <rect x="10" y="122" width="98" height="19" rx="2.5" fill="#0B0B0B"/>
-
-  <!-- Letra R (tronco x=84-112, copa extendiéndose a x=180) con fill-rule=evenodd para el ojo -->
-  <path
-    fill="#0B0B0B"
-    fill-rule="evenodd"
-    d="
-      M84 16
-      H136
-      C162 16 182 34 182 58
-      C182 82 162 100 136 100
-      L160 158
-      H132
-      L110 104
-      V158
-      H84
-      Z
-
-      M110 40
-      H135
-      C146 40 154 48 154 58
-      C154 68 146 76 135 76
-      H110
-      Z
-    "
-  />
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 185" overflow="visible" role="img" aria-label="ROMERO Impermeabilizaciones">
   <!-- ROMERO -->
   <text
-    x="200" y="120"
+    x="14" y="120"
     font-family="'Arial Black', 'Inter', sans-serif"
     font-weight="900"
     font-size="94"
@@ -41,7 +11,7 @@
 
   <!-- IMPERMEABILIZACIONES -->
   <text
-    x="202" y="154"
+    x="16" y="154"
     font-family="'Arial', 'Inter', sans-serif"
     font-weight="700"
     font-size="21"
