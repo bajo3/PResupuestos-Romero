@@ -12,6 +12,7 @@ import { PrintActions } from './components/PrintActions'
 import { ReceiptList } from './components/ReceiptList'
 import { ReceiptForm } from './components/ReceiptForm'
 import { ReceiptPreview } from './components/ReceiptPreview'
+import { BrandLogo } from './components/BrandLogo'
 
 // ─── Tipos de vista ───────────────────────────────────────────────────────────
 
@@ -35,19 +36,14 @@ function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void 
       <div className="mx-auto max-w-2xl px-4">
         {/* Marca */}
         <div className="flex items-center gap-3 pt-3 pb-2">
-          <div className="bg-romero-yellow rounded-xl p-1.5">
-            <img
-              src="/logo-romero.svg"
-              alt="ROMERO"
-              className="h-8 w-auto object-contain"
-              style={{ maxWidth: '160px' }}
-            />
+          <div className="bg-white rounded-xl border-2 border-romero-yellow p-1 shadow-sm">
+            <BrandLogo variant="nav" />
           </div>
           <div className="leading-tight min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-romero-gray-3 truncate">
               Especialistas en Impermeabilización
             </div>
-            <div className="text-base font-extrabold leading-none">Romero CRM</div>
+            <div className="text-base font-extrabold leading-none">Lucas Gallastagui</div>
           </div>
         </div>
 

@@ -1,30 +1,9 @@
 import { Receipt } from '../types/receipt'
 import { formatMoney, formatLongDate } from '../utils/money'
+import { BrandLogo } from './BrandLogo'
 
 interface Props {
   receipt: Receipt
-}
-
-function RomeroLogo({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 880 185"
-      role="img"
-      aria-label="ROMERO Impermeabilizaciones"
-      className={className}
-      preserveAspectRatio="xMinYMid meet"
-    >
-      <rect x="10" y="26" width="98" height="19" rx="2.5" fill="#0B0B0B" />
-      <rect x="10" y="74" width="98" height="19" rx="2.5" fill="#0B0B0B" />
-      <rect x="10" y="122" width="98" height="19" rx="2.5" fill="#0B0B0B" />
-      <path fill="#0B0B0B" fillRule="evenodd"
-        d="M84 16 H136 C162 16 182 34 182 58 C182 82 162 100 136 100 L160 158 H132 L110 104 V158 H84 Z M110 40 H135 C146 40 154 48 154 58 C154 68 146 76 135 76 H110 Z"
-      />
-      <text x="200" y="120" fontFamily="'Arial Black','Inter',sans-serif" fontWeight={900} fontSize={94} letterSpacing={-1} fill="#0B0B0B">ROMERO</text>
-      <text x="202" y="154" fontFamily="'Arial','Inter',sans-serif" fontWeight={700} fontSize={21} letterSpacing={4.5} fill="#0B0B0B">IMPERMEABILIZACIONES</text>
-    </svg>
-  )
 }
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -61,9 +40,9 @@ export function ReceiptPreview({ receipt: r }: Props) {
           {/* Logo */}
           <div
             className="rounded-xl px-3 py-2 shrink-0"
-            style={{ backgroundColor: '#F5C800' }}
+            style={{ backgroundColor: '#FFFFFF' }}
           >
-            <RomeroLogo className="h-9 w-auto" />
+            <BrandLogo variant="document" />
           </div>
 
           {/* Título */}
@@ -201,7 +180,7 @@ export function ReceiptPreview({ receipt: r }: Props) {
         <div className="grid grid-cols-2 gap-8 pt-2">
           {[
             { title: 'Firma y aclaración', sub: 'Quien entrega' },
-            { title: 'Firma y sello', sub: 'ROMERO Impermeabilizaciones' },
+            { title: 'Firma y sello', sub: 'Lucas Gallastagui Impermeabilizaciones' },
           ].map((s) => (
             <div key={s.title} className="text-center">
               {/* Espacio para firmar */}
@@ -239,7 +218,7 @@ export function ReceiptPreview({ receipt: r }: Props) {
             className="font-extrabold uppercase tracking-[0.26em]"
             style={{ fontSize: '9px', color: '#F5C800' }}
           >
-            ROMERO Impermeabilizaciones
+            Lucas Gallastagui Impermeabilizaciones
           </div>
         </div>
         <div

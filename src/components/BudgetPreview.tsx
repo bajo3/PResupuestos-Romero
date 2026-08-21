@@ -1,52 +1,9 @@
 import { Budget, computeTotals } from '../types/budget'
 import { formatMoney, formatNumber, formatLongDate } from '../utils/money'
+import { BrandLogo } from './BrandLogo'
 
 interface Props {
   budget: Budget
-}
-
-function RomeroLogo({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 880 185"
-      role="img"
-      aria-label="ROMERO Impermeabilizaciones"
-      className={className}
-      preserveAspectRatio="xMinYMid meet"
-    >
-      <rect x="10" y="26" width="98" height="19" rx="2.5" fill="#0B0B0B" />
-      <rect x="10" y="74" width="98" height="19" rx="2.5" fill="#0B0B0B" />
-      <rect x="10" y="122" width="98" height="19" rx="2.5" fill="#0B0B0B" />
-      <path
-        fill="#0B0B0B"
-        fillRule="evenodd"
-        d="M84 16 H136 C162 16 182 34 182 58 C182 82 162 100 136 100 L160 158 H132 L110 104 V158 H84 Z M110 40 H135 C146 40 154 48 154 58 C154 68 146 76 135 76 H110 Z"
-      />
-      <text
-        x="200"
-        y="120"
-        fontFamily="'Arial Black', 'Inter', sans-serif"
-        fontWeight={900}
-        fontSize={94}
-        letterSpacing={-1}
-        fill="#0B0B0B"
-      >
-        ROMERO
-      </text>
-      <text
-        x="202"
-        y="154"
-        fontFamily="'Arial', 'Inter', sans-serif"
-        fontWeight={700}
-        fontSize={21}
-        letterSpacing={4.5}
-        fill="#0B0B0B"
-      >
-        IMPERMEABILIZACIONES
-      </text>
-    </svg>
-  )
 }
 
 function SectionTitle({ n, label }: { n: string; label: string }) {
@@ -73,7 +30,7 @@ function Footer({ budget }: { budget: Budget }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
         <div style={{ height: '6px', width: '32px', backgroundColor: '#F5C800', borderRadius: '999px' }} />
         <div style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.26em', color: '#F5C800' }}>
-          ROMERO Impermeabilizaciones
+          Lucas Gallastagui Impermeabilizaciones
         </div>
       </div>
 
@@ -81,7 +38,7 @@ function Footer({ budget }: { budget: Budget }) {
       <div style={{ display: 'flex', gap: '40px', fontSize: '12px', lineHeight: 1.6, color: 'rgba(255,255,255,0.7)' }}>
         <div>
           <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Web</div>
-          <div style={{ fontWeight: 600, color: 'white' }}>impermeabilizacionesromero.com</div>
+          <div style={{ fontWeight: 600, color: 'white' }}>Lucas Gallastagui</div>
         </div>
         <div>
           <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>Tandil</div>
@@ -127,8 +84,8 @@ export function BudgetPreview({ budget }: Props) {
         <div className="relative px-5 sm:px-10 pt-7 pb-8">
           {/* Logo + número */}
           <div className="flex items-start justify-between gap-3">
-            <div className="bg-romero-yellow rounded-xl px-3 py-2.5 shadow-lg shadow-black/20">
-              <RomeroLogo className="h-9 sm:h-12 w-auto" />
+            <div className="bg-white rounded-xl px-3 py-1.5 shadow-lg shadow-black/20">
+              <BrandLogo variant="document" />
             </div>
             <div
               className="relative z-10 rounded-2xl px-4 py-3 text-right shadow-xl shadow-black/40"

@@ -64,7 +64,7 @@ async function downloadPDF(clientName: string, docType: string, setLoading: (v: 
     }
 
     const safe = (clientName || 'cliente').replace(/[^a-zA-Z0-9\s\-áéíóúüñÁÉÍÓÚÜÑ]/g, '').trim()
-    pdf.save(`${docType}-${safe || 'romero'}.pdf`)
+    pdf.save(`${docType}-${safe || 'lucas-gallastagui'}.pdf`)
   } finally {
     setLoading(false)
   }

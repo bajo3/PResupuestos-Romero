@@ -21,6 +21,32 @@ body {
   font-feature-settings: "cv11", "ss01";
 }
 
+.brand-logo {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.brand-logo img {
+  position: absolute;
+  top: -18%;
+  left: 0;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+
+.brand-logo--nav {
+  width: 140px;
+  height: 78px;
+}
+
+.brand-logo--document {
+  width: 176px;
+  height: 104px;
+}
+
 /* Inputs base */
 .input {
   @apply w-full rounded-xl border border-romero-gray-2 bg-white px-3.5 py-3 text-[15px] outline-none transition focus:border-romero-ink focus:ring-4 focus:ring-romero-yellow/40;
