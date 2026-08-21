@@ -29,7 +29,7 @@ body {
 
 .brand-logo img {
   position: absolute;
-  top: -18%;
+  top: -15%;
   left: 0;
   display: block;
   width: 100%;
@@ -39,12 +39,12 @@ body {
 
 .brand-logo--nav {
   width: 140px;
-  height: 78px;
+  height: 96px;
 }
 
 .brand-logo--document {
   width: 176px;
-  height: 104px;
+  height: 118px;
 }
 
 /* Inputs base */
