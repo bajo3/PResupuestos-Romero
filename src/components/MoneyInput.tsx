@@ -8,9 +8,10 @@ interface Props {
   prefix?: string
   className?: string
   id?: string
+  autoFocus?: boolean
 }
 
-export function MoneyInput({ value, onChange, placeholder, prefix = '$', className, id }: Props) {
+export function MoneyInput({ value, onChange, placeholder, prefix = '$', className, id, autoFocus }: Props) {
   const [text, setText] = useState<string>(value === 0 ? '' : formatNumber(value, 0))
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export function MoneyInput({ value, onChange, placeholder, prefix = '$', classNa
       </span>
       <input
         id={id}
+        autoFocus={autoFocus}
         inputMode="numeric"
         placeholder={placeholder}
         value={text}

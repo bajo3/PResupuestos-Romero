@@ -8,8 +8,13 @@ interface Props {
 }
 
 async function downloadPDF(clientName: string, docType: string, setLoading: (v: boolean) => void) {
-  const sheet = document.querySelector('.sheet') as HTMLElement | null
+  const sheet = document.querySelector('.sheet, .budget-sheet') as HTMLElement | null
   if (!sheet) return
+
+  // El presupuesto se muestra reducido con transform: se captura a tamaño real.
+  const scaled = sheet.closest('.budget-scale-inner') as HTMLElement | null
+  const prevTransform = scaled?.style.transform ?? ''
+  if (scaled) scaled.style.transform = 'none'
 
   setLoading(true)
   try {
@@ -26,6 +31,18 @@ async function downloadPDF(clientName: string, docType: string, setLoading: (v: 
 
     const blocks = Array.from(sheet.children) as HTMLElement[]
     let cursorY = marginY
+
+    // Hojas de tamaño fijo (presupuesto): una por página, ajustadas a la A4 completa
+    if (blocks.length > 0 && blocks.every((b) => b.hasAttribute('data-page'))) {
+      for (let i = 0; i < blocks.length; i++) {
+        const canvas = await html2canvas(blocks[i], { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false })
+        if (i > 0) pdf.addPage()
+        pdf.addImage(canvas, 'JPEG', 0, 0, pageW, pageH)
+      }
+      const name = (clientName || 'cliente').replace(/[^a-zA-Z0-9\s\-áéíóúüñÁÉÍÓÚÜÑ]/g, '').trim()
+      pdf.save(`${docType}-${name || 'lucas-gallastagui'}.pdf`)
+      return
+    }
 
     for (const block of blocks) {
       const canvas = await html2canvas(block, {
@@ -66,6 +83,7 @@ async function downloadPDF(clientName: string, docType: string, setLoading: (v: 
     const safe = (clientName || 'cliente').replace(/[^a-zA-Z0-9\s\-áéíóúüñÁÉÍÓÚÜÑ]/g, '').trim()
     pdf.save(`${docType}-${safe || 'lucas-gallastagui'}.pdf`)
   } finally {
+    if (scaled) scaled.style.transform = prevTransform
     setLoading(false)
   }
 }
@@ -76,23 +94,23 @@ export function PrintActions({ onBack, onEdit, clientName = '', docType = 'presu
   return (
     <div className="no-print sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-romero-gray-2">
       <div className="mx-auto max-w-5xl px-3 sm:px-6 py-2.5 flex items-center gap-2">
-        <button onClick={onBack} className="btn-ghost py-2 text-[13px]">
+        <button onClick={onBack} className="btn-ghost py-2 px-3 text-[13px] whitespace-nowrap">
           ← Volver
         </button>
-        <button onClick={onEdit} className="btn-ghost py-2 text-[13px]">
+        <button onClick={onEdit} className="btn-ghost py-2 px-3 text-[13px] whitespace-nowrap">
           ✏ Editar
         </button>
         <div className="flex-1" />
         <button
           onClick={() => window.print()}
-          className="btn-ghost py-2 text-[13px]"
+          className="btn-ghost py-2 px-3 text-[13px] whitespace-nowrap"
         >
           <span className="hidden sm:inline">🖨 </span>Imprimir
         </button>
         <button
           onClick={() => downloadPDF(clientName, docType, setLoading)}
           disabled={loading}
-          className="btn-yellow py-2 text-[13px] min-w-[110px] flex items-center justify-center gap-1.5"
+          className="btn-yellow py-2 px-3 text-[13px] sm:min-w-[110px] flex items-center justify-center gap-1.5 whitespace-nowrap"
         >
           {loading ? (
             <>
@@ -100,7 +118,7 @@ export function PrintActions({ onBack, onEdit, clientName = '', docType = 'presu
               Generando…
             </>
           ) : (
-            <>⬇ Descargar PDF</>
+            <>⬇ <span className="hidden sm:inline">Descargar&nbsp;</span>PDF</>
           )}
         </button>
       </div>

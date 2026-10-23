@@ -42,6 +42,11 @@ body {
   height: 96px;
 }
 
+.brand-logo--compact {
+  width: 124px;
+  height: 83px;
+}
+
 .brand-logo--document {
   width: 176px;
   height: 118px;
@@ -71,7 +76,7 @@ body {
    =========================== */
 @page {
   size: A4;
-  margin: 12mm 10mm;
+  margin: 8mm;
 }
 
 @media print {
@@ -92,6 +97,42 @@ body {
   .avoid-break { break-inside: avoid; page-break-inside: avoid; }
 }
 .print-only { display: none; }
+
+/* Presupuesto: 2 hojas A4 de tamaño fijo (794x1123 px) */
+.budget-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.budget-sheet, .budget-sheet * {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.budget-page {
+  position: relative;
+  width: 794px;
+  height: 1123px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.18);
+  border-radius: 6px;
+}
+@media print {
+  .budget-scaler { height: auto !important; max-width: none !important; }
+  .budget-scale-inner { transform: none !important; width: auto !important; }
+  .budget-sheet { gap: 0; }
+  .budget-page {
+    zoom: 0.92;
+    margin: 0 auto;
+    box-shadow: none;
+    border-radius: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+  .budget-page:last-child { break-after: auto; page-break-after: auto; }
+}
 
 /* Hoja A4 visual en pantalla */
 .sheet {

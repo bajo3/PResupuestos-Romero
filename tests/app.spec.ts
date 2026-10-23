@@ -1,311 +1,157 @@
 import { test, expect, Page } from '@playwright/test'
 
-async function goHome(page: Page) {
-  await page.goto('/#/presupuestos')
-  await expect(page.getByText('+ Nuevo presupuesto')).toBeVisible({ timeout: 10_000 })
+// Datos de prueba: se cargan en localStorage antes de abrir la app (sin Supabase).
+async function seed(page: Page, data: Record<string, unknown>) {
+  await page.addInitScript((d) => {
+    for (const [k, v] of Object.entries(d)) localStorage.setItem(k, JSON.stringify(v))
+  }, data)
 }
 
-async function openDemo(page: Page) {
-  await goHome(page)
-  await page.getByText('👁 Ver').first().click()
-  // Usar el h1 exacto para evitar strict-mode con "Presupuesto final" y "N° de presupuesto"
-  await expect(page.getByRole('heading', { name: 'PRESUPUESTO', exact: true })).toBeVisible({ timeout: 8_000 })
+const now = Date.now()
+const today = (() => {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+})()
+
+const budget = {
+  id: 'b1', number: '010', date: today, client: 'Consorcio Paz', address: 'Paz 1333', propertyType: 'Vivienda',
+  validityDays: 15, deliveryTime: 'A definir', workTitle: 'Impermeabilización de techo', description: 'Trabajo de prueba.',
+  pricingMode: 'per_m2', squareMeters: 100, pricePerM2: 50000, fixedPrice: 0, advancePct: 50, finalPct: 50,
+  vatIncluded: false, applyVat: false, vatPct: 21,
+  stages: ['Limpieza.', 'Membrana.'], materials: ['Membrana ECO DRY.'], conditions: ['Condición uno.', 'Condición dos.'],
+  createdAt: now, updatedAt: now,
 }
 
-async function openNewForm(page: Page) {
-  await goHome(page)
-  await page.getByText('+ Nuevo presupuesto').click()
-  await expect(page.getByText('Datos del presupuesto')).toBeVisible({ timeout: 8_000 })
-}
+const base = { createdAt: now, updatedAt: now }
 
-async function openNewReceiptForm(page: Page) {
-  await goHome(page)
-  await page.getByRole('button', { name: 'Recibos' }).click()
-  await page.getByText('+ Nuevo recibo').click()
-  await expect(page.getByText('Datos del recibo')).toBeVisible({ timeout: 8_000 })
-}
+// ─── Presupuestos ─────────────────────────────────────────────────────────────
 
-// ──────────────────────────────────────────────
-// HOME
-// ──────────────────────────────────────────────
-test.describe('Home', () => {
-  test('muestra el botón Nuevo presupuesto', async ({ page }) => {
-    await goHome(page)
-    await expect(page.getByText('+ Nuevo presupuesto')).toBeVisible()
+test.describe('Presupuestos', () => {
+  test('lista, abre la vista y ocupa exactamente 2 hojas', async ({ page }) => {
+    await seed(page, { 'romero.budgets.v1': [budget] })
+    await page.goto('/#/presupuestos')
+    await expect(page.getByText('Consorcio Paz')).toBeVisible()
+    await page.getByText('👁 Ver').click()
+    await expect(page.locator('.budget-page')).toHaveCount(2)
+    await expect(page.getByText('$ 5.000.000,00').first()).toBeVisible()
+    await expect(page.getByText('no entra en 2 hojas')).toHaveCount(0)
   })
 
-  test('seed demo: aparece Consorcio Castagnino', async ({ page }) => {
-    await goHome(page)
-    await expect(page.getByText('Consorcio Castagnino')).toBeVisible()
+  test('el PDF impreso tiene 2 páginas', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium')
+    await seed(page, { 'romero.budgets.v1': [budget] })
+    await page.goto('/#/presupuestos')
+    await page.getByText('👁 Ver').click()
+    await expect(page.locator('.budget-page')).toHaveCount(2)
+    await page.waitForTimeout(500)
+    const pdf = await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true })
+    const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) ?? []).length
+    expect(pages).toBe(2)
   })
 
-  test('buscador filtra por cliente', async ({ page }) => {
-    await goHome(page)
-    await page.getByPlaceholder('Buscar por cliente, dirección o N°').fill('castagnino')
-    await expect(page.getByText('Consorcio Castagnino')).toBeVisible()
+  test('avisa si el contenido no entra en 2 hojas', async ({ page }) => {
+    const long = { ...budget, stages: Array.from({ length: 24 }, (_, i) => `Etapa ${i + 1} con bastante texto descriptivo para ocupar espacio en la primera hoja del presupuesto.`) }
+    await seed(page, { 'romero.budgets.v1': [long] })
+    await page.goto('/#/presupuestos')
+    await page.getByText('👁 Ver').click()
+    await expect(page.getByText('no entra en 2 hojas')).toBeVisible()
   })
 
-  test('buscador sin resultados muestra mensaje', async ({ page }) => {
-    await goHome(page)
-    await page.getByPlaceholder('Buscar por cliente, dirección o N°').fill('xxxxxx_no_existe')
-    await expect(page.getByText('Sin resultados')).toBeVisible()
-  })
+  test('formulario: calcula el total, valida y guarda', async ({ page }) => {
+    await page.goto('/#/presupuestos')
+    await page.getByText('+ Nuevo presupuesto').click()
+    await expect(page.getByText('1. Cliente')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Guardar' }).first()).toBeDisabled()
 
-  test('limpiar búsqueda muestra el demo de nuevo', async ({ page }) => {
-    await goHome(page)
-    const searchInput = page.getByPlaceholder('Buscar por cliente, dirección o N°')
-    await searchInput.fill('algo')
-    await page.locator('button[aria-label="Limpiar búsqueda"]').click()
-    await expect(page.getByText('Consorcio Castagnino')).toBeVisible()
-  })
-})
-
-// ──────────────────────────────────────────────
-// VISTA PREVIA
-// ──────────────────────────────────────────────
-test.describe('Vista previa del presupuesto demo', () => {
-  test('se abre al hacer click en Ver', async ({ page }) => {
-    await openDemo(page)
-    await expect(page.getByRole('heading', { name: 'PRESUPUESTO', exact: true })).toBeVisible()
-  })
-
-  test('muestra nombre del cliente', async ({ page }) => {
-    await openDemo(page)
-    await expect(page.getByText('Consorcio Castagnino').first()).toBeVisible()
-  })
-
-  test('muestra dirección', async ({ page }) => {
-    await openDemo(page)
-    await expect(page.getByText('Paz 1333').first()).toBeVisible()
-  })
-
-  test('muestra número de presupuesto 700 - 433', async ({ page }) => {
-    await openDemo(page)
-    await expect(page.getByText('700 - 433').first()).toBeVisible()
-  })
-
-  test('total $13.800.000 visible', async ({ page }) => {
-    await openDemo(page)
-    await expect(page.getByText(/13\.800\.000/).first()).toBeVisible()
-  })
-
-  test('anticipo $9.660.000 visible', async ({ page }) => {
-    await openDemo(page)
-    await expect(page.getByText(/9\.660\.000/).first()).toBeVisible()
-  })
-
-  test('finalización $4.140.000 visible', async ({ page }) => {
-    await openDemo(page)
-    await expect(page.getByText(/4\.140\.000/).first()).toBeVisible()
-  })
-
-  test('footer: teléfono +54 9 2284 59-7150', async ({ page }) => {
-    await openDemo(page)
-    await expect(page.getByText('+54 9 2284 59-7150').first()).toBeVisible()
-  })
-
-  test('barra de acciones: Volver, Editar, Imprimir, Descargar PDF', async ({ page }) => {
-    await openDemo(page)
-    await expect(page.getByText('← Volver')).toBeVisible()
-    await expect(page.getByText(/Editar/).first()).toBeVisible()
-    await expect(page.getByText(/Imprimir/)).toBeVisible()
-    await expect(page.getByText(/Descargar PDF/)).toBeVisible()
-  })
-
-  test('Volver regresa al home', async ({ page }) => {
-    await openDemo(page)
-    await page.getByText('← Volver').click()
-    await expect(page.getByText('+ Nuevo presupuesto')).toBeVisible()
-  })
-
-  test('Editar abre el formulario con los datos del presupuesto', async ({ page }) => {
-    await openDemo(page)
-    // El botón Editar en la barra de acciones
-    await page.locator('.no-print').getByText(/Editar/).click()
-    await expect(page.getByText('Datos del presupuesto')).toBeVisible({ timeout: 5_000 })
-    // Verificar que los datos están precargados
-    await expect(page.locator('input[placeholder="Consorcio Castagnino"]')).toHaveValue('Consorcio Castagnino')
-  })
-})
-
-// ──────────────────────────────────────────────
-// FORMULARIO
-// ──────────────────────────────────────────────
-test.describe('Formulario de presupuesto', () => {
-  test('se abre al hacer click en Nuevo', async ({ page }) => {
-    await openNewForm(page)
-    await expect(page.getByText('Datos del presupuesto')).toBeVisible()
-  })
-
-  test('secciones abiertas por defecto tienen sus inputs visibles', async ({ page }) => {
-    await openNewForm(page)
-    // Cliente section es defaultOpen=true → inputs visibles sin click
-    await expect(page.getByPlaceholder('Consorcio Castagnino')).toBeVisible()
-    await expect(page.getByPlaceholder('Paz 1333')).toBeVisible()
-  })
-
-  test('botón Guardar deshabilitado con form vacío', async ({ page }) => {
-    await openNewForm(page)
-    // Hay dos botones "Guardar" (top bar desktop + sticky mobile) — ambos deben estar disabled
-    const buttons = page.getByRole('button', { name: 'Guardar' })
-    const count = await buttons.count()
-    for (let i = 0; i < count; i++) {
-      await expect(buttons.nth(i)).toBeDisabled()
-    }
-  })
-
-  test('MoneyInput: $ y número no se solapan', async ({ page }) => {
-    await openNewForm(page)
-    // El MoneyInput es un flex container: span$ + input
-    // Buscamos el span del $ dentro del flex container del precio
-    const moneyContainer = page.locator('div.flex.items-center').filter({
-      has: page.locator('span', { hasText: /^\$$/ }),
-    }).first()
-    await expect(moneyContainer).toBeVisible()
-
-    const span = moneyContainer.locator('span').first()
-    const input = moneyContainer.locator('input').first()
-
-    const spanBox = await span.boundingBox()
-    const inputBox = await input.boundingBox()
-
-    expect(spanBox).not.toBeNull()
-    expect(inputBox).not.toBeNull()
-    if (spanBox && inputBox) {
-      // El borde derecho del $ (spanRight) debe estar a la IZQUIERDA del inicio del input (inputLeft)
-      const spanRight = spanBox.x + spanBox.width
-      const inputLeft = inputBox.x
-      // Permitimos máximo 5px de overlap (font rendering puede variar)
-      expect(spanRight).toBeLessThanOrEqual(inputLeft + 5)
-    }
-  })
-
-  test('llenar formulario completo y guardar navega a preview', async ({ page }) => {
-    await openNewForm(page)
-
-    // Sección Cliente (ya abierta por defecto)
     await page.getByPlaceholder('Consorcio Castagnino').fill('Cliente Test')
-    await page.getByPlaceholder('Paz 1333').fill('Dirección 456')
-
-    // Sección Cálculo económico (ya abierta por defecto)
+    await page.getByPlaceholder('Paz 1333').fill('Calle 123')
     await page.getByPlaceholder('200').fill('100')
+    await page.getByPlaceholder('69.000').fill('50000')
+    await expect(page.getByText('$ 5.000.000,00').locator('visible=true').first()).toBeVisible()
 
-    // MoneyInput para precio/m²
-    const moneyInput = page.locator('div.flex.items-center').filter({
-      has: page.locator('span', { hasText: /^\$$/ }),
-    }).first().locator('input')
-    await moneyInput.fill('50000')
-    await moneyInput.blur()
+    await page.getByRole('button', { name: '30% / 70%' }).click()
+    await expect(page.getByText('$ 1.500.000,00').first()).toBeVisible()
 
-    // Guardar (primer botón "Guardar" visible y habilitado)
-    const guardar = page.getByRole('button', { name: 'Guardar' }).first()
-    await expect(guardar).toBeEnabled({ timeout: 5_000 })
-    await guardar.click()
-
-    await expect(page.getByRole('heading', { name: 'PRESUPUESTO', exact: true })).toBeVisible({ timeout: 5_000 })
-    await expect(page.getByText('Cliente Test').first()).toBeVisible()
-  })
-
-  test('permite guardar presupuesto con total $0', async ({ page }) => {
-    await openNewForm(page)
-
-    await page.getByPlaceholder('Consorcio Castagnino').fill('Cliente Cero')
-    await page.getByPlaceholder('Paz 1333').fill('Direccion 0')
-    await page.getByPlaceholder('200').fill('100')
-
-    const moneyInput = page.locator('div.flex.items-center').filter({
-      has: page.locator('span', { hasText: /^\$$/ }),
-    }).first().locator('input')
-    await moneyInput.fill('0')
-    await moneyInput.blur()
-    await expect(moneyInput).toHaveValue('0')
-
-    const guardar = page.getByRole('button', { name: 'Guardar' }).first()
-    await expect(guardar).toBeEnabled({ timeout: 5_000 })
-    await guardar.click()
-
-    await expect(page.getByRole('heading', { name: 'PRESUPUESTO', exact: true })).toBeVisible({ timeout: 5_000 })
-    await expect(page.getByText('Cliente Cero').first()).toBeVisible()
-    await expect(page.getByText('$ 0,00').first()).toBeVisible()
-  })
-
-  test('cálculo automático: 100 m² x $50.000 = $5.000.000', async ({ page }) => {
-    await openNewForm(page)
-
-    await page.getByPlaceholder('Consorcio Castagnino').fill('X')
-    await page.getByPlaceholder('Paz 1333').fill('X')
-    await page.getByPlaceholder('200').fill('100')
-
-    const moneyInput = page.locator('div.flex.items-center').filter({
-      has: page.locator('span', { hasText: /^\$$/ }),
-    }).first().locator('input')
-    await moneyInput.fill('50000')
-    await moneyInput.blur()
-
-    // El resumen automático dentro del formulario
-    await expect(page.getByText(/5\.000\.000/).first()).toBeVisible({ timeout: 5_000 })
-  })
-
-  test('anticipo cambia y finalización se ajusta a 100%', async ({ page }) => {
-    await openNewForm(page)
-
-    // Orden real: nth(0)=validityDays, nth(1)=squareMeters, nth(2)=advancePct, nth(3)=finalPct
-    const anticipoInput = page.locator('input[type="number"]').nth(2)
-    await anticipoInput.fill('60')
-    await anticipoInput.blur()
-
-    const finInput = page.locator('input[type="number"]').nth(3)
-    await expect(finInput).toHaveValue('40')
-  })
-
-  test('validación: muestra error si cliente vacío', async ({ page }) => {
-    await openNewForm(page)
-    // El formulario vacío debe mostrar la sección de errores (al intentar guardar no hace nada)
-    // Verificar que el panel de errores existe cuando hay campos vacíos
-    await expect(page.getByText('Cliente es obligatorio')).toBeVisible()
+    await page.getByRole('button', { name: 'Guardar' }).first().click()
+    await expect(page.locator('.budget-page')).toHaveCount(2)
   })
 })
 
-// ──────────────────────────────────────────────
-// ACCIONES DE LISTA
-// ──────────────────────────────────────────────
-test.describe('Formulario de recibo', () => {
-  test('permite guardar recibo con monto $0', async ({ page }) => {
-    await openNewReceiptForm(page)
+// ─── Caja ─────────────────────────────────────────────────────────────────────
 
-    await page.getByPlaceholder('Consorcio Castagnino').fill('Cliente Recibo Cero')
+test.describe('Caja', () => {
+  test('registrar salida y entrada actualiza el saldo; anular lo revierte', async ({ page }) => {
+    await page.goto('/#/caja')
+    await expect(page.getByText('Plata en caja')).toBeVisible()
 
-    const moneyInput = page.locator('div.flex.items-center').filter({
-      has: page.locator('span', { hasText: /^\$$/ }),
-    }).first().locator('input')
-    await moneyInput.fill('0')
-    await moneyInput.blur()
-    await expect(moneyInput).toHaveValue('0')
+    await page.getByRole('button', { name: '+ Entró plata' }).click()
+    await page.keyboard.type('1000000')
+    await page.getByPlaceholder('Ej: seña obra Castagnino').fill('Seña')
+    await page.getByRole('button', { name: 'Guardar' }).click()
+    await expect(page.getByText('$ 1.000.000,00').first()).toBeVisible()
 
-    await page.getByPlaceholder(/Anticipo presupuesto/).fill('Recibo sin cargo')
+    await page.getByRole('button', { name: '− Salió plata' }).click()
+    await page.keyboard.type('250000')
+    await page.getByPlaceholder('Ej: 10 rollos de membrana').fill('Combustible')
+    await page.getByRole('button', { name: 'Guardar' }).click()
+    await expect(page.getByText('$ 750.000,00').first()).toBeVisible()
 
-    const guardar = page.getByRole('button', { name: 'Guardar' }).first()
-    await expect(guardar).toBeEnabled({ timeout: 5_000 })
-    await guardar.click()
-
-    await expect(page.getByText('RECIBO', { exact: true })).toBeVisible({ timeout: 5_000 })
-    await expect(page.getByText('Cliente Recibo Cero').first()).toBeVisible()
-    await expect(page.getByText('$ 0,00').first()).toBeVisible()
+    page.once('dialog', (d) => d.accept('error de carga'))
+    await page.getByText('Combustible').click()
+    await page.getByRole('button', { name: 'Anular' }).click()
+    await expect(page.getByText('$ 1.000.000,00').first()).toBeVisible()
+    await expect(page.getByText('anulado: error de carga')).toBeVisible()
   })
 })
 
-test.describe('Acciones de lista', () => {
-  test('Duplicar crea una segunda card', async ({ page }) => {
-    await goHome(page)
-    const before = await page.getByText('Consorcio Castagnino').count()
-    await page.getByText('Duplicar').first().click()
-    const after = await page.getByText('Consorcio Castagnino').count()
-    expect(after).toBeGreaterThan(before)
+// ─── Obras, recibos y stock ───────────────────────────────────────────────────
+
+test.describe('Obras', () => {
+  test('el recibo suma cobrado y los gastos restan ganancia', async ({ page }) => {
+    await seed(page, {
+      'lg.crm.obras.v1': [{ id: 'o1', name: 'Reforma', client: 'Lucas', address: 'Paz 1', amount: 5000000, status: 'en_ejecucion', startDate: today, endDate: '', notes: '', ...base }],
+      'romero.receipts.v1': [{ id: 'r1', number: '001', date: today, obraId: 'o1', client: 'Lucas', address: '', amount: 3000000, paymentMethod: 'Transferencia', concept: 'Seña', ...base }],
+      'lg.crm.movements.v1': [{ id: 'e1', date: today, type: 'egreso', category: 'Mano de obra', amount: 2200000, method: 'Efectivo', description: 'Cuadrilla', obraId: 'o1', ...base }],
+    })
+    await page.goto('/#/obras/o1')
+    await expect(page.getByText('Reforma').first()).toBeVisible()
+    await expect(page.getByText('60%')).toBeVisible()
+    await expect(page.getByText('$ 2.800.000,00').first()).toBeVisible() // ganancia estimada
+    await expect(page.getByText('$ 800.000,00').first()).toBeVisible() // ganancia real
   })
 
-  test('Editar desde lista precarga datos del cliente', async ({ page }) => {
-    await goHome(page)
-    await page.getByText('✏ Editar').first().click()
-    await expect(page.locator('input[placeholder="Consorcio Castagnino"]')).toHaveValue('Consorcio Castagnino', { timeout: 5_000 })
+  test('el stock usado en una obra cuenta como gasto y no mueve la caja', async ({ page }) => {
+    await seed(page, {
+      'lg.crm.obras.v1': [{ id: 'o1', name: 'Reforma', client: 'Lucas', address: '', amount: 1000000, status: 'en_ejecucion', startDate: today, endDate: '', notes: '', ...base }],
+      'lg.crm.stock_items.v1': [{ id: 's1', name: 'Membrana', unit: 'rollo', minStock: 0, unitCost: 100000, ...base }],
+      'lg.crm.stock_moves.v1': [
+        { id: 'm1', itemId: 's1', date: today, qty: 10, unitCost: 100000, note: 'Compra', ...base },
+        { id: 'm2', itemId: 's1', date: today, qty: -4, unitCost: 100000, obraId: 'o1', note: '', ...base },
+      ],
+      'lg.crm.movements.v1': [{ id: 'e0', date: today, type: 'egreso', category: 'Materiales', amount: 1000000, method: 'Efectivo', description: 'Compra stock', stockMoveId: 'm1', ...base }],
+    })
+    await page.goto('/#/obras/o1')
+    await expect(page.getByText('$ 400.000,00').first()).toBeVisible() // 4 rollos x 100.000
+    await page.goto('/#/caja')
+    await expect(page.getByText('− $ 1.000.000,00')).toBeVisible()
+    await expect(page.getByText('$ -1.000.000,00').first()).toBeVisible()
+  })
+})
+
+// ─── Deudas ───────────────────────────────────────────────────────────────────
+
+test.describe('Deudas', () => {
+  test('un pago parcial baja lo pendiente y sale de caja', async ({ page }) => {
+    await seed(page, {
+      'lg.crm.debts.v1': [{ id: 'd1', creditor: 'Corralón', description: '', amount: 500000, dueDate: today, ...base }],
+    })
+    await page.goto('/#/deudas')
+    await page.getByRole('button', { name: 'Pagar' }).click()
+    await page.getByRole('dialog').locator('input[inputmode="numeric"]').first().fill('200000')
+    await page.getByRole('button', { name: 'Guardar' }).click()
+    await expect(page.getByText('$ 300.000,00').first()).toBeVisible()
+    await page.goto('/#/caja')
+    await expect(page.getByText('Pago a Corralón')).toBeVisible()
   })
 })

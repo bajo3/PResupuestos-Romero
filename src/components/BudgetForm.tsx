@@ -47,11 +47,13 @@ interface Props {
 
 interface SectionProps {
   title: string
+  /** Resumen que se ve cuando la sección está cerrada. */
+  hint?: string
   defaultOpen?: boolean
   children: React.ReactNode
 }
 
-function Section({ title, defaultOpen = true, children }: SectionProps) {
+function Section({ title, hint, defaultOpen = true, children }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen)
   return (
     <div className="card overflow-hidden">
@@ -60,7 +62,10 @@ function Section({ title, defaultOpen = true, children }: SectionProps) {
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between px-4 py-3.5 text-left"
       >
-        <span className="font-bold text-[15px]">{title}</span>
+        <span className="min-w-0">
+          <span className="font-bold text-[15px]">{title}</span>
+          {!open && hint && <span className="ml-2 text-[12px] text-romero-gray-3 truncate">{hint}</span>}
+        </span>
         <span className="text-romero-gray-3 text-lg">{open ? '–' : '+'}</span>
       </button>
       {open && <div className="px-4 pb-4 pt-1 border-t border-romero-gray-2/70">{children}</div>}
@@ -168,7 +173,13 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
       {/* Top bar */}
       <div className="flex items-center gap-2 mb-4">
         <button onClick={onCancel} className="btn-ghost py-2 text-[13px]">← Volver</button>
-        <div className="flex-1" />
+        <div className="flex-1 text-right hidden sm:block">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-romero-gray-3 mr-2">Total</span>
+          <span className="font-extrabold text-[16px] tabular-nums">
+            {b.pricingMode === 'pending' ? 'A confirmar' : formatMoney(totals.total)}
+          </span>
+        </div>
+        <div className="flex-1 sm:hidden" />
         {/* Vista previa solo en desktop; en mobile está en la barra sticky del fondo */}
         <button
           onClick={() => onPreview({ ...b, updatedAt: Date.now() })}
@@ -176,7 +187,7 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
         >
           Vista previa
         </button>
-        <button onClick={save} className="btn-primary py-2 text-[13px]" disabled={!canSave}>
+        <button onClick={save} className="btn-primary py-2 text-[13px]" disabled={!canSave} title={canSave ? '' : errors.join(' · ')}>
           Guardar
         </button>
       </div>
@@ -184,48 +195,7 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
       <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-6">
         {/* Form */}
         <div className="space-y-4">
-          <Section title="Datos del presupuesto">
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className="label">Número</label>
-                <input
-                  className="input"
-                  value={b.number}
-                  onChange={(e) => set('number', e.target.value)}
-                  placeholder="700 - 433"
-                />
-              </div>
-              <div>
-                <label className="label">Fecha</label>
-                <input
-                  type="date"
-                  className="input"
-                  value={b.date}
-                  onChange={(e) => set('date', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="label">Validez (días)</label>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  className="input"
-                  value={b.validityDays}
-                  onChange={(e) => set('validityDays', Number(e.target.value) || 0)}
-                />
-              </div>
-              <div>
-                <label className="label">Tiempo de entrega</label>
-                <input
-                  className="input"
-                  value={b.deliveryTime}
-                  onChange={(e) => set('deliveryTime', e.target.value)}
-                />
-              </div>
-            </div>
-          </Section>
-
-          <Section title="Cliente">
+          <Section title="1. Cliente">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2 relative">
                 <label className="label">Cliente *</label>
@@ -276,71 +246,25 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
                   onChange={(e) => set('propertyType', e.target.value)}
                   placeholder="Vivienda"
                 />
-              </div>
-            </div>
-          </Section>
-
-          <Section title="Trabajo">
-            <div className="space-y-3">
-              <div>
-                <label className="label">Título del trabajo</label>
-                <input
-                  className="input"
-                  value={b.workTitle}
-                  onChange={(e) => set('workTitle', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="label">Descripción</label>
-                <textarea
-                  className="input min-h-[110px]"
-                  value={b.description}
-                  onChange={(e) => set('description', e.target.value)}
-                />
-              </div>
-            </div>
-          </Section>
-
-          <Section title={`Fotos de la obra${(b.photos?.length ?? 0) > 0 ? ` (${b.photos?.length})` : ''}`}>
-            <div className="space-y-3">
-              <div className="rounded-xl border border-dashed border-romero-gray-2 bg-romero-gray p-4">
-                <label className="label">Adjuntar fotos</label>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  disabled={photoBusy || (b.photos?.length ?? 0) >= MAX_PHOTOS}
-                  onChange={(e) => {
-                    void handlePhotoFiles(e.target.files)
-                    e.currentTarget.value = ''
-                  }}
-                  className="block w-full text-sm text-romero-gray-3 file:mr-3 file:rounded-lg file:border-0 file:bg-romero-ink file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-black disabled:opacity-50"
-                />
-                <div className="mt-2 text-[12px] text-romero-gray-3">
-                  {photoBusy ? 'Procesando imágenes…' : `Hasta ${MAX_PHOTOS} fotos. Se comprimen para que el PDF sea liviano.`}
-                </div>
-              </div>
-              {photoError && <div className="text-[12px] text-red-700">{photoError}</div>}
-              {(b.photos?.length ?? 0) > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {(b.photos ?? []).map((photo, index) => (
-                    <div key={`${photo.slice(0, 24)}-${index}`} className="relative overflow-hidden rounded-xl border border-romero-gray-2 bg-white">
-                      <img src={photo} alt={`Foto de obra ${index + 1}`} className="h-28 w-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removePhoto(index)}
-                        className="absolute right-1.5 top-1.5 rounded-full bg-black/75 px-2 py-1 text-xs font-bold text-white"
-                      >
-                        ×
-                      </button>
-                    </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {['Vivienda', 'Comercio', 'Consorcio', 'Industria'].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => set('propertyType', t)}
+                      className={`rounded-full border px-3 py-1 text-[12px] font-semibold transition ${
+                        b.propertyType === t ? 'bg-romero-ink text-white border-romero-ink' : 'bg-white text-romero-gray-3 border-romero-gray-2 hover:border-romero-ink/40'
+                      }`}
+                    >
+                      {t}
+                    </button>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
           </Section>
 
-          <Section title="Cálculo económico">
+          <Section title="2. Precio">
             <div className="grid sm:grid-cols-2 gap-3">
               {/* Toggle modo de precio */}
               <div className="sm:col-span-2 grid grid-cols-3 rounded-xl overflow-hidden border border-romero-gray-2 text-sm font-semibold">
@@ -413,31 +337,36 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
                 </div>
               ) : (
                 <>
-                  <div>
-                    <label className="label">Anticipo (%)</label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      className="input"
-                      value={b.advancePct}
-                      onChange={(e) => {
-                        const v = Number(e.target.value) || 0
-                        setB((p) => ({ ...p, advancePct: v, finalPct: 100 - v }))
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="label">Finalización (%)</label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      className="input"
-                      value={b.finalPct}
-                      onChange={(e) => {
-                        const v = Number(e.target.value) || 0
-                        setB((p) => ({ ...p, finalPct: v, advancePct: 100 - v }))
-                      }}
-                    />
+                  <div className="sm:col-span-2">
+                    <label className="label">Anticipo (el resto se cobra al finalizar)</label>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {[30, 40, 50, 60, 70].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setB((x) => ({ ...x, advancePct: p, finalPct: 100 - p }))}
+                          className={`rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition ${
+                            b.advancePct === p ? 'bg-romero-ink text-white border-romero-ink' : 'bg-white text-romero-gray-3 border-romero-gray-2 hover:border-romero-ink/40'
+                          }`}
+                        >
+                          {p}% / {100 - p}%
+                        </button>
+                      ))}
+                      <label className="inline-flex items-center gap-1.5 ml-1 text-[13px] text-romero-gray-3">
+                        Otro
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          className="input w-20 py-1.5"
+                          value={b.advancePct}
+                          onChange={(e) => {
+                            const v = Math.min(100, Math.max(0, Number(e.target.value) || 0))
+                            setB((x) => ({ ...x, advancePct: v, finalPct: 100 - v }))
+                          }}
+                        />
+                        %
+                      </label>
+                    </div>
                   </div>
                   <div className="sm:col-span-2 flex flex-wrap items-center gap-4 rounded-xl bg-romero-gray p-3">
                     <label className="inline-flex items-center gap-2 text-sm font-semibold">
@@ -496,7 +425,67 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
             </div>
           </Section>
 
-          <Section title="Etapas de obra" defaultOpen={false}>
+          <Section title="3. Trabajo" hint={b.workTitle}>
+            <div className="space-y-3">
+              <div>
+                <label className="label">Título del trabajo</label>
+                <input
+                  className="input"
+                  value={b.workTitle}
+                  onChange={(e) => set('workTitle', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="label">Descripción</label>
+                <textarea
+                  className="input min-h-[110px]"
+                  value={b.description}
+                  onChange={(e) => set('description', e.target.value)}
+                />
+              </div>
+            </div>
+          </Section>
+
+          <Section title={`4. Fotos de la obra${(b.photos?.length ?? 0) > 0 ? ` (${b.photos?.length})` : ''}`} defaultOpen={(b.photos?.length ?? 0) > 0}>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-dashed border-romero-gray-2 bg-romero-gray p-4">
+                <label className="label">Adjuntar fotos</label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  disabled={photoBusy || (b.photos?.length ?? 0) >= MAX_PHOTOS}
+                  onChange={(e) => {
+                    void handlePhotoFiles(e.target.files)
+                    e.currentTarget.value = ''
+                  }}
+                  className="block w-full text-sm text-romero-gray-3 file:mr-3 file:rounded-lg file:border-0 file:bg-romero-ink file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-black disabled:opacity-50"
+                />
+                <div className="mt-2 text-[12px] text-romero-gray-3">
+                  {photoBusy ? 'Procesando imágenes…' : `Hasta ${MAX_PHOTOS} fotos. Se comprimen para que el PDF sea liviano.`}
+                </div>
+              </div>
+              {photoError && <div className="text-[12px] text-red-700">{photoError}</div>}
+              {(b.photos?.length ?? 0) > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {(b.photos ?? []).map((photo, index) => (
+                    <div key={`${photo.slice(0, 24)}-${index}`} className="relative overflow-hidden rounded-xl border border-romero-gray-2 bg-white">
+                      <img src={photo} alt={`Foto de obra ${index + 1}`} className="h-28 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute right-1.5 top-1.5 rounded-full bg-black/75 px-2 py-1 text-xs font-bold text-white"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Section>
+
+          <Section title="Etapas de obra" hint={`${b.stages.length} etapas`} defaultOpen={false}>
             <EditableList
               items={b.stages}
               onChange={(items) => set('stages', items)}
@@ -505,7 +494,7 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
             />
           </Section>
 
-          <Section title="Materiales incluidos" defaultOpen={false}>
+          <Section title="Materiales incluidos" hint={`${b.materials.length} ítems`} defaultOpen={false}>
             <EditableList
               items={b.materials}
               onChange={(items) => set('materials', items)}
@@ -514,13 +503,54 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
             />
           </Section>
 
-          <Section title="Condiciones comerciales" defaultOpen={false}>
+          <Section title="Condiciones comerciales" hint={`${b.conditions.length} condiciones`} defaultOpen={false}>
             <EditableList
               items={b.conditions}
               onChange={(items) => set('conditions', items)}
               placeholder="Condición…"
               addLabel="Agregar condición"
             />
+          </Section>
+
+          <Section title="Datos del documento" hint={`N° ${b.number || '—'} · validez ${b.validityDays} días`} defaultOpen={false}>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="label">Número</label>
+                <input
+                  className="input"
+                  value={b.number}
+                  onChange={(e) => set('number', e.target.value)}
+                  placeholder="700 - 433"
+                />
+              </div>
+              <div>
+                <label className="label">Fecha</label>
+                <input
+                  type="date"
+                  className="input"
+                  value={b.date}
+                  onChange={(e) => set('date', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="label">Validez (días)</label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  className="input"
+                  value={b.validityDays}
+                  onChange={(e) => set('validityDays', Number(e.target.value) || 0)}
+                />
+              </div>
+              <div>
+                <label className="label">Tiempo de entrega</label>
+                <input
+                  className="input"
+                  value={b.deliveryTime}
+                  onChange={(e) => set('deliveryTime', e.target.value)}
+                />
+              </div>
+            </div>
           </Section>
 
           <Section title="Observaciones internas" defaultOpen={false}>
@@ -550,23 +580,29 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
             <div className="text-[11px] font-semibold uppercase tracking-wider text-romero-gray-3 mb-2">
               Vista previa en vivo
             </div>
-            <div className="overflow-auto max-h-[calc(100vh-2rem)] rounded-2xl">
-              <div className="origin-top-left scale-[0.85]">
-                <BudgetPreview budget={b} />
-              </div>
+            <div className="overflow-auto max-h-[calc(100vh-5rem)] rounded-2xl">
+              <BudgetPreview budget={b} />
             </div>
           </div>
         </div>
       </div>
 
       {/* Sticky save bar mobile */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur border-t border-romero-gray-2 px-4 py-3 flex gap-2">
-        <button onClick={() => onPreview({ ...b, updatedAt: Date.now() })} className="btn-ghost flex-1">
-          Vista previa
-        </button>
-        <button onClick={save} disabled={!canSave} className="btn-primary flex-1">
-          Guardar
-        </button>
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur border-t border-romero-gray-2 px-4 pt-2 pb-3">
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-romero-gray-3">Total</span>
+          <span className="font-extrabold text-[17px] tabular-nums">
+            {b.pricingMode === 'pending' ? 'A confirmar' : formatMoney(totals.total)}
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => onPreview({ ...b, updatedAt: Date.now() })} className="btn-ghost flex-1">
+            Vista previa
+          </button>
+          <button onClick={save} disabled={!canSave} className="btn-primary flex-1">
+            Guardar
+          </button>
+        </div>
       </div>
     </div>
   )

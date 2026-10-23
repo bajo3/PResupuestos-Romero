@@ -1,5 +1,5 @@
 interface Props {
-  variant?: 'nav' | 'document'
+  variant?: 'nav' | 'document' | 'compact'
   className?: string
 }
 
