@@ -5,6 +5,8 @@ import { MoneyInput } from './MoneyInput'
 import { formatMoney } from '../utils/money'
 import { loadClients } from '../utils/storage'
 import type { ClientRecord } from '../utils/supabase'
+import { useCrm } from '../crm/CrmContext'
+import { ObraSelect } from '../crm/ui'
 
 interface Props {
   initial: Receipt
@@ -16,6 +18,7 @@ interface Props {
 const PAYMENT_METHODS: PaymentMethod[] = ['Efectivo', 'Transferencia', 'Cheque']
 
 export function ReceiptForm({ initial, budgets, onCancel, onSave }: Props) {
+  const { data } = useCrm()
   const [r, setR] = useState<Receipt>({ ...initial })
   const [clientSuggestions, setClientSuggestions] = useState<ClientRecord[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -49,8 +52,10 @@ export function ReceiptForm({ initial, budgets, onCancel, onSave }: Props) {
     const b = budgets.find((x) => x.id === budgetId)
     if (!b) return
     const totals = computeTotals(b)
+    const obra = data.obras.find((o) => o.budgetId === b.id)
     setR((p) => ({
       ...p,
+      obraId: obra?.id ?? p.obraId,
       budgetId: b.id,
       budgetNumber: b.number,
       client: b.client,
@@ -128,6 +133,21 @@ export function ReceiptForm({ initial, budgets, onCancel, onSave }: Props) {
               Cliente, dirección, concepto y monto se completaron automáticamente. Podés editarlos abajo.
             </p>
           )}
+          <label className="label mt-3">Obra</label>
+          <ObraSelect
+            value={r.obraId}
+            onChange={(id) => {
+              const o = data.obras.find((x) => x.id === id)
+              setR((p) => ({
+                ...p,
+                obraId: id,
+                ...(o && !p.client ? { client: o.client, address: o.address } : {}),
+              }))
+            }}
+          />
+          <p className="text-[12px] text-romero-gray-3 mt-2">
+            El recibo suma como ingreso en caja y como cobro de la obra elegida.
+          </p>
         </div>
 
         {/* Cliente */}
@@ -255,7 +275,7 @@ export function ReceiptForm({ initial, budgets, onCancel, onSave }: Props) {
       </div>
 
       {/* Sticky save bar mobile */}
-      <div className="fixed bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur border-t border-romero-gray-2 px-4 py-3 flex gap-2">
+      <div className="fixed bottom-0 inset-x-0 lg:left-60 z-20 bg-white/95 backdrop-blur border-t border-romero-gray-2 px-4 py-3 flex gap-2">
         <button onClick={onCancel} className="btn-ghost flex-1">Cancelar</button>
         <button onClick={save} disabled={!canSave} className="btn-primary flex-1">
           Guardar recibo

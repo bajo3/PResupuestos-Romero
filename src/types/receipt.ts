@@ -1,3 +1,5 @@
+import { today } from './crm'
+
 export type PaymentMethod = 'Efectivo' | 'Transferencia' | 'Cheque'
 
 export interface Receipt {
@@ -6,6 +8,7 @@ export interface Receipt {
   date: string // ISO yyyy-mm-dd
   budgetId?: string
   budgetNumber?: string
+  obraId?: string
   client: string
   address: string
   amount: number
@@ -22,7 +25,7 @@ export function makeEmptyReceipt(): Receipt {
   return {
     id: crypto.randomUUID(),
     number: '',
-    date: new Date().toISOString().slice(0, 10),
+    date: today(),
     client: '',
     address: '',
     amount: 0,

@@ -58,6 +58,7 @@ function Footer({ budget }: { budget: Budget }) {
 
 export function BudgetPreview({ budget }: Props) {
   const t = computeTotals(budget)
+  const hasPhotos = (budget.photos?.length ?? 0) > 0
 
   return (
     <article className="sheet print:overflow-visible">
@@ -169,16 +170,34 @@ export function BudgetPreview({ budget }: Props) {
               Resumen de obra
             </div>
             <div className="grid grid-cols-2 gap-y-2 text-[13px]">
-              {budget.pricingMode === 'per_m2' && (
+              {budget.squareMeters > 0 && (
                 <>
                   <span className="text-romero-gray-3">Superficie</span>
                   <span className="text-right font-bold">{formatNumber(budget.squareMeters)} m²</span>
-                  <span className="text-romero-gray-3">Precio / m²</span>
-                  <span className="text-right font-bold text-[12px]">{formatMoney(budget.pricePerM2)}</span>
+                  {budget.pricingMode === 'per_m2' ? (
+                    <>
+                      <span className="text-romero-gray-3">Precio / m²</span>
+                      <span className="text-right font-bold text-[12px]">{formatMoney(budget.pricePerM2)}</span>
+                    </>
+                  ) : budget.pricingMode === 'pending' ? (
+                    <>
+                      <span className="text-romero-gray-3">Importe</span>
+                      <span className="text-right font-bold text-[12px]">A confirmar</span>
+                    </>
+                  ) : null}
                 </>
               )}
-              <span className="font-semibold">Total</span>
-              <span className="text-right font-extrabold text-[12px]">{formatMoney(t.total)}</span>
+              {budget.pricingMode === 'pending' ? (
+                <>
+                  <span className="font-semibold">Presupuesto</span>
+                  <span className="text-right font-extrabold text-[12px]">A confirmar</span>
+                </>
+              ) : (
+                <>
+                  <span className="font-semibold">Total</span>
+                  <span className="text-right font-extrabold text-[12px]">{formatMoney(t.total)}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -246,7 +265,16 @@ export function BudgetPreview({ budget }: Props) {
         <div className="rounded-2xl border border-romero-gray-2 overflow-hidden bg-white">
 
           {/* m² / precio / subtotal — en mobile se convierte en tabla vertical */}
-          {budget.pricingMode === 'per_m2' ? (
+          {budget.pricingMode === 'pending' ? (
+            <div className="bg-romero-gray px-4 sm:px-5 py-5">
+              <div className="grid grid-cols-2 gap-y-2 text-sm">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-romero-gray-3">Superficie</span>
+                <span className="text-right font-display font-bold text-[15px]">{formatNumber(budget.squareMeters)} m²</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-romero-gray-3">Importe</span>
+                <span className="text-right font-display font-bold text-[15px]">A confirmar</span>
+              </div>
+            </div>
+          ) : budget.pricingMode === 'per_m2' ? (
             <>
               <div className="hidden sm:grid grid-cols-3 divide-x divide-romero-gray-2 bg-romero-gray">
                 <div className="p-4">
@@ -286,60 +314,77 @@ export function BudgetPreview({ budget }: Props) {
             </div>
           )}
 
-          {budget.applyVat && (
-            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-romero-gray-2 text-sm">
-              <span className="text-romero-gray-3 font-semibold">IVA ({budget.vatPct}%)</span>
-              <span className="font-bold">{formatMoney(t.vat)}</span>
+          {budget.pricingMode === 'pending' ? (
+            <div className="relative bg-romero-ink text-white px-4 sm:px-6 py-5 sm:py-6 overflow-hidden">
+              <div aria-hidden className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-romero-yellow/15" />
+              <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-4">
+                <div>
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.26em] text-romero-yellow">Presupuesto económico</div>
+                  <div className="text-[11px] text-white/60 mt-0.5">Importe a confirmar antes del inicio de obra</div>
+                </div>
+                <div className="font-display text-[27px] sm:text-[38px] font-bold leading-none tracking-tight text-romero-yellow">
+                  A confirmar
+                </div>
+              </div>
             </div>
+          ) : (
+            <>
+              {budget.applyVat && (
+                <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-romero-gray-2 text-sm">
+                  <span className="text-romero-gray-3 font-semibold">IVA ({budget.vatPct}%)</span>
+                  <span className="font-bold">{formatMoney(t.vat)}</span>
+                </div>
+              )}
+
+              {/* TOTAL */}
+              <div className="relative bg-romero-ink text-white px-4 sm:px-6 py-5 sm:py-6 overflow-hidden">
+                <div aria-hidden className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-romero-yellow/15" />
+                <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-4">
+                  <div>
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.26em] text-romero-yellow">
+                      Presupuesto final
+                    </div>
+                    <div className="text-[11px] text-white/55 mt-0.5">
+                      {budget.applyVat ? `Incluye IVA ${budget.vatPct}%` : 'No incluye IVA'}
+                    </div>
+                  </div>
+                  <div className="font-display text-[28px] sm:text-[42px] font-bold leading-none tracking-tight text-white">
+                    {formatMoney(t.total)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Anticipo / Finalización */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-romero-gray-2">
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-romero-gray-3">Anticipo</div>
+                    <span style={{ display: 'inline-block', minWidth: '2rem', padding: '2px 8px', fontSize: '11px', fontWeight: 700, backgroundColor: '#0B0B0B', color: 'white', borderRadius: '999px', textAlign: 'center', lineHeight: '20px' }}>
+                      {budget.advancePct}%
+                    </span>
+                  </div>
+                  <div className="font-display font-bold text-[22px] sm:text-2xl leading-none">{formatMoney(t.advance)}</div>
+                  <div className="mt-2.5 h-1.5 rounded-full bg-romero-gray-2 overflow-hidden">
+                    <div className="h-full bg-romero-ink" style={{ width: `${budget.advancePct}%` }} />
+                  </div>
+                  <div className="text-[11px] text-romero-gray-3 mt-1.5">Con fecha de inicio a coordinar.</div>
+                </div>
+                <div className="p-4 sm:p-5 bg-romero-yellow/15">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-romero-ink/70">Finalización</div>
+                    <span style={{ display: 'inline-block', minWidth: '2rem', padding: '2px 8px', fontSize: '11px', fontWeight: 700, backgroundColor: '#FFD60A', color: '#0B0B0B', borderRadius: '999px', textAlign: 'center', lineHeight: '20px' }}>
+                      {budget.finalPct}%
+                    </span>
+                  </div>
+                  <div className="font-display font-bold text-[22px] sm:text-2xl leading-none">{formatMoney(t.final)}</div>
+                  <div className="mt-2.5 h-1.5 rounded-full bg-romero-yellow-deep/30 overflow-hidden">
+                    <div className="h-full bg-romero-yellow-deep" style={{ width: `${budget.finalPct}%` }} />
+                  </div>
+                  <div className="text-[11px] text-romero-ink/60 mt-1.5">Contra entrega de obra terminada.</div>
+                </div>
+              </div>
+            </>
           )}
-
-          {/* TOTAL */}
-          <div className="relative bg-romero-ink text-white px-4 sm:px-6 py-5 sm:py-6 overflow-hidden">
-            <div aria-hidden className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-romero-yellow/15" />
-            <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-4">
-              <div>
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.26em] text-romero-yellow">
-                  Presupuesto final
-                </div>
-                <div className="text-[11px] text-white/55 mt-0.5">
-                  {budget.applyVat ? `Incluye IVA ${budget.vatPct}%` : 'No incluye IVA'}
-                </div>
-              </div>
-              <div className="font-display text-[28px] sm:text-[42px] font-bold leading-none tracking-tight text-white">
-                {formatMoney(t.total)}
-              </div>
-            </div>
-          </div>
-
-          {/* Anticipo / Finalización */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-romero-gray-2">
-            <div className="p-4 sm:p-5">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-romero-gray-3">Anticipo</div>
-                <span style={{ display: 'inline-block', minWidth: '2rem', padding: '2px 8px', fontSize: '11px', fontWeight: 700, backgroundColor: '#0B0B0B', color: 'white', borderRadius: '999px', textAlign: 'center', lineHeight: '20px' }}>
-                  {budget.advancePct}%
-                </span>
-              </div>
-              <div className="font-display font-bold text-[22px] sm:text-2xl leading-none">{formatMoney(t.advance)}</div>
-              <div className="mt-2.5 h-1.5 rounded-full bg-romero-gray-2 overflow-hidden">
-                <div className="h-full bg-romero-ink" style={{ width: `${budget.advancePct}%` }} />
-              </div>
-              <div className="text-[11px] text-romero-gray-3 mt-1.5">Con fecha de inicio a coordinar.</div>
-            </div>
-            <div className="p-4 sm:p-5 bg-romero-yellow/15">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-romero-ink/70">Finalización</div>
-                <span style={{ display: 'inline-block', minWidth: '2rem', padding: '2px 8px', fontSize: '11px', fontWeight: 700, backgroundColor: '#FFD60A', color: '#0B0B0B', borderRadius: '999px', textAlign: 'center', lineHeight: '20px' }}>
-                  {budget.finalPct}%
-                </span>
-              </div>
-              <div className="font-display font-bold text-[22px] sm:text-2xl leading-none">{formatMoney(t.final)}</div>
-              <div className="mt-2.5 h-1.5 rounded-full bg-romero-yellow-deep/30 overflow-hidden">
-                <div className="h-full bg-romero-yellow-deep" style={{ width: `${budget.finalPct}%` }} />
-              </div>
-              <div className="text-[11px] text-romero-ink/60 mt-1.5">Contra entrega de obra terminada.</div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -357,6 +402,26 @@ export function BudgetPreview({ budget }: Props) {
           ))}
         </ul>
       </section>
+
+      {hasPhotos && (
+        <section className="px-5 sm:px-10 pt-9 pb-5">
+          <SectionTitle n="06" label="Registro fotográfico" />
+          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+            {(budget.photos ?? []).map((photo, i) => (
+              <figure key={`${photo.slice(0, 24)}-${i}`} className="overflow-hidden rounded-xl border border-romero-gray-2 bg-romero-gray">
+                <img
+                  src={photo}
+                  alt={`Registro fotográfico de la obra ${i + 1}`}
+                  className="h-44 sm:h-56 w-full object-cover"
+                />
+                <figcaption className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-romero-gray-3">
+                  Estado actual · Foto {i + 1}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
       <Footer budget={budget} />
     </article>

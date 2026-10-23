@@ -5,6 +5,8 @@ export interface ClientRecord {
   name: string
   address: string
   property_type: string
+  phone?: string
+  notes?: string
   updated_at: number
 }
 
@@ -73,4 +75,31 @@ export async function nextReceiptNumberFromSupabase(): Promise<string | null> {
   const { data, error } = await supabase.rpc('increment_receipt_sequence')
   if (error || data == null) return null
   return String(data as number).padStart(3, '0')
+}
+
+// ─── CRM (obras, caja, deudas, stock, garantías) ─────────────────────────────
+
+export async function syncCrmRecordToSupabase(
+  kind: string,
+  record: { id: string; updatedAt: number; archived?: boolean },
+): Promise<void> {
+  if (!supabase) return
+  await supabase.from('crm_records').upsert({
+    id: record.id,
+    kind,
+    data: record,
+    updated_at: record.updatedAt,
+    archived: record.archived ?? false,
+  })
+}
+
+export async function fetchCrmRecordsFromSupabase(): Promise<{ kind: string; data: object }[] | null> {
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('crm_records')
+    .select('kind, data')
+    .eq('archived', false)
+    .order('updated_at', { ascending: false })
+  if (error) return null
+  return (data as { kind: string; data: object }[]) ?? []
 }

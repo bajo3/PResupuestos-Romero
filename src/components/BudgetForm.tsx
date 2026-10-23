@@ -7,6 +7,37 @@ import { formatMoney } from '../utils/money'
 import { loadClients, upsertClient } from '../utils/storage'
 import type { ClientRecord } from '../utils/supabase'
 
+const MAX_PHOTOS = 6
+const MAX_PHOTO_SIDE = 1600
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error ?? new Error('No se pudo leer la imagen'))
+    reader.readAsDataURL(file)
+  })
+}
+
+async function compressPhoto(file: File): Promise<string> {
+  const source = await readFileAsDataUrl(file)
+  const image = new Image()
+  image.src = source
+  await new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve()
+    image.onerror = () => reject(new Error('El archivo no es una imagen válida'))
+  })
+
+  const scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(image.naturalWidth, image.naturalHeight))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale))
+  const context = canvas.getContext('2d')
+  if (!context) return source
+  context.drawImage(image, 0, 0, canvas.width, canvas.height)
+  return canvas.toDataURL('image/jpeg', 0.82)
+}
+
 interface Props {
   initial: Budget
   onCancel: () => void
@@ -41,6 +72,8 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
   const [b, setB] = useState<Budget>({ ...initial })
   const [clientSuggestions, setClientSuggestions] = useState<ClientRecord[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoError, setPhotoError] = useState('')
   const suggestionsRef = useRef<HTMLDivElement>(null)
 
   const set = <K extends keyof Budget>(k: K, v: Budget[K]) => setB((p) => ({ ...p, [k]: v }))
@@ -67,16 +100,50 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
     setShowSuggestions(false)
   }
 
+  const handlePhotoFiles = async (files: FileList | null) => {
+    if (!files?.length) return
+    const current = b.photos ?? []
+    const available = Math.max(0, MAX_PHOTOS - current.length)
+    if (available === 0) {
+      setPhotoError(`Podés adjuntar hasta ${MAX_PHOTOS} fotos.`)
+      return
+    }
+
+    setPhotoBusy(true)
+    setPhotoError('')
+    try {
+      const selected = Array.from(files).slice(0, available)
+      const encoded = await Promise.all(selected.map(compressPhoto))
+      set('photos', [...current, ...encoded])
+      if (selected.length < files.length) {
+        setPhotoError(`Se agregaron ${selected.length} fotos. El máximo es ${MAX_PHOTOS}.`)
+      }
+    } catch {
+      setPhotoError('No se pudo cargar una de las imágenes. Probá con JPG o PNG.')
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
+  const removePhoto = (index: number) => {
+    set('photos', (b.photos ?? []).filter((_, i) => i !== index))
+    setPhotoError('')
+  }
+
   const errors: string[] = []
   if (!b.client.trim()) errors.push('Cliente es obligatorio')
   if (!b.address.trim()) errors.push('Dirección es obligatoria')
-  if (b.pricingMode === 'per_m2') {
+  if (b.pricingMode !== 'fixed') {
     if (!(b.squareMeters > 0)) errors.push('m² debe ser mayor a 0')
-    if (!(Number.isFinite(b.pricePerM2) && b.pricePerM2 >= 0)) errors.push('Precio por m² no puede ser negativo')
+    if (b.pricingMode === 'per_m2' && !(Number.isFinite(b.pricePerM2) && b.pricePerM2 >= 0)) {
+      errors.push('Precio por m² no puede ser negativo')
+    }
   } else {
     if (!(Number.isFinite(b.fixedPrice) && b.fixedPrice >= 0)) errors.push('Precio total no puede ser negativo')
   }
-  if (b.advancePct + b.finalPct !== 100) errors.push('Anticipo + finalización debe sumar 100%')
+  if (b.pricingMode !== 'pending' && b.advancePct + b.finalPct !== 100) {
+    errors.push('Anticipo + finalización debe sumar 100%')
+  }
 
   const canSave = errors.length === 0
 
@@ -234,10 +301,49 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
             </div>
           </Section>
 
+          <Section title={`Fotos de la obra${(b.photos?.length ?? 0) > 0 ? ` (${b.photos?.length})` : ''}`}>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-dashed border-romero-gray-2 bg-romero-gray p-4">
+                <label className="label">Adjuntar fotos</label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  disabled={photoBusy || (b.photos?.length ?? 0) >= MAX_PHOTOS}
+                  onChange={(e) => {
+                    void handlePhotoFiles(e.target.files)
+                    e.currentTarget.value = ''
+                  }}
+                  className="block w-full text-sm text-romero-gray-3 file:mr-3 file:rounded-lg file:border-0 file:bg-romero-ink file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-black disabled:opacity-50"
+                />
+                <div className="mt-2 text-[12px] text-romero-gray-3">
+                  {photoBusy ? 'Procesando imágenes…' : `Hasta ${MAX_PHOTOS} fotos. Se comprimen para que el PDF sea liviano.`}
+                </div>
+              </div>
+              {photoError && <div className="text-[12px] text-red-700">{photoError}</div>}
+              {(b.photos?.length ?? 0) > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {(b.photos ?? []).map((photo, index) => (
+                    <div key={`${photo.slice(0, 24)}-${index}`} className="relative overflow-hidden rounded-xl border border-romero-gray-2 bg-white">
+                      <img src={photo} alt={`Foto de obra ${index + 1}`} className="h-28 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute right-1.5 top-1.5 rounded-full bg-black/75 px-2 py-1 text-xs font-bold text-white"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Section>
+
           <Section title="Cálculo económico">
             <div className="grid sm:grid-cols-2 gap-3">
               {/* Toggle modo de precio */}
-              <div className="sm:col-span-2 flex rounded-xl overflow-hidden border border-romero-gray-2 text-sm font-semibold">
+              <div className="sm:col-span-2 grid grid-cols-3 rounded-xl overflow-hidden border border-romero-gray-2 text-sm font-semibold">
                 <button
                   type="button"
                   onClick={() => set('pricingMode', 'per_m2')}
@@ -252,9 +358,16 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
                 >
                   Precio fijo
                 </button>
+                <button
+                  type="button"
+                  onClick={() => set('pricingMode', 'pending')}
+                  className={`flex-1 py-2.5 transition-colors ${b.pricingMode === 'pending' ? 'bg-romero-ink text-white' : 'bg-romero-gray text-romero-gray-3 hover:text-romero-ink'}`}
+                >
+                  Sin precio
+                </button>
               </div>
 
-              {b.pricingMode === 'per_m2' ? (
+              {b.pricingMode !== 'fixed' ? (
                 <>
                   <div>
                     <label className="label">Metros cuadrados</label>
@@ -267,14 +380,20 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
                       placeholder="200"
                     />
                   </div>
-                  <div>
-                    <label className="label">Precio por m²</label>
-                    <MoneyInput
-                      value={b.pricePerM2}
-                      onChange={(n) => set('pricePerM2', n)}
-                      placeholder="69.000"
-                    />
-                  </div>
+                  {b.pricingMode === 'per_m2' ? (
+                    <div>
+                      <label className="label">Precio por m²</label>
+                      <MoneyInput
+                        value={b.pricePerM2}
+                        onChange={(n) => set('pricePerM2', n)}
+                        placeholder="69.000"
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-romero-yellow bg-romero-yellow/20 p-3 text-sm font-semibold text-romero-ink">
+                      Precio a confirmar luego de definir el alcance económico.
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="sm:col-span-2">
@@ -286,84 +405,94 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
                   />
                 </div>
               )}
-              <div>
-                <label className="label">Anticipo (%)</label>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  className="input"
-                  value={b.advancePct}
-                  onChange={(e) => {
-                    const v = Number(e.target.value) || 0
-                    setB((p) => ({ ...p, advancePct: v, finalPct: 100 - v }))
-                  }}
-                />
-              </div>
-              <div>
-                <label className="label">Finalización (%)</label>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  className="input"
-                  value={b.finalPct}
-                  onChange={(e) => {
-                    const v = Number(e.target.value) || 0
-                    setB((p) => ({ ...p, finalPct: v, advancePct: 100 - v }))
-                  }}
-                />
-              </div>
-              <div className="sm:col-span-2 flex flex-wrap items-center gap-4 rounded-xl bg-romero-gray p-3">
-                <label className="inline-flex items-center gap-2 text-sm font-semibold">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-romero-ink"
-                    checked={b.applyVat}
-                    onChange={(e) => set('applyVat', e.target.checked)}
-                  />
-                  Calcular IVA
-                </label>
-                {b.applyVat && (
-                  <>
-                    <label className="inline-flex items-center gap-2 text-sm">
+              {b.pricingMode === 'pending' ? (
+                <div className="sm:col-span-2 card p-4 bg-romero-gray border-romero-gray-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-romero-gray-3 mb-1">Resumen económico</div>
+                  <div className="font-extrabold text-lg">Precio a confirmar</div>
+                  <div className="text-[12px] text-romero-gray-3 mt-1">El importe, IVA y forma de pago se definirán antes de iniciar la obra.</div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="label">Anticipo (%)</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      className="input"
+                      value={b.advancePct}
+                      onChange={(e) => {
+                        const v = Number(e.target.value) || 0
+                        setB((p) => ({ ...p, advancePct: v, finalPct: 100 - v }))
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="label">Finalización (%)</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      className="input"
+                      value={b.finalPct}
+                      onChange={(e) => {
+                        const v = Number(e.target.value) || 0
+                        setB((p) => ({ ...p, finalPct: v, advancePct: 100 - v }))
+                      }}
+                    />
+                  </div>
+                  <div className="sm:col-span-2 flex flex-wrap items-center gap-4 rounded-xl bg-romero-gray p-3">
+                    <label className="inline-flex items-center gap-2 text-sm font-semibold">
                       <input
                         type="checkbox"
                         className="h-4 w-4 accent-romero-ink"
-                        checked={b.vatIncluded}
-                        onChange={(e) => set('vatIncluded', e.target.checked)}
+                        checked={b.applyVat}
+                        onChange={(e) => set('applyVat', e.target.checked)}
                       />
-                      IVA incluido en el precio
+                      Calcular IVA
                     </label>
-                    <label className="inline-flex items-center gap-2 text-sm">
-                      <span className="text-romero-gray-3">% IVA</span>
-                      <input
-                        type="number"
-                        className="input w-24 py-2"
-                        value={b.vatPct}
-                        onChange={(e) => set('vatPct', Number(e.target.value) || 0)}
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
+                    {b.applyVat && (
+                      <>
+                        <label className="inline-flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-romero-ink"
+                            checked={b.vatIncluded}
+                            onChange={(e) => set('vatIncluded', e.target.checked)}
+                          />
+                          IVA incluido en el precio
+                        </label>
+                        <label className="inline-flex items-center gap-2 text-sm">
+                          <span className="text-romero-gray-3">% IVA</span>
+                          <input
+                            type="number"
+                            className="input w-24 py-2"
+                            value={b.vatPct}
+                            onChange={(e) => set('vatPct', Number(e.target.value) || 0)}
+                          />
+                        </label>
+                      </>
+                    )}
+                  </div>
 
-              <div className="sm:col-span-2 card p-4 bg-romero-gray border-romero-gray-2">
-                <div className="grid grid-cols-2 gap-y-1.5 text-sm">
-                  <span className="text-romero-gray-3">Subtotal</span>
-                  <span className="text-right font-semibold">{formatMoney(totals.subtotal)}</span>
-                  {b.applyVat && (
-                    <>
-                      <span className="text-romero-gray-3">IVA ({b.vatPct}%)</span>
-                      <span className="text-right font-semibold">{formatMoney(totals.vat)}</span>
-                    </>
-                  )}
-                  <span className="font-bold">Total</span>
-                  <span className="text-right font-extrabold text-base">{formatMoney(totals.total)}</span>
-                  <span className="text-romero-gray-3">Anticipo {b.advancePct}%</span>
-                  <span className="text-right font-semibold">{formatMoney(totals.advance)}</span>
-                  <span className="text-romero-gray-3">Finalización {b.finalPct}%</span>
-                  <span className="text-right font-semibold">{formatMoney(totals.final)}</span>
-                </div>
-              </div>
+                  <div className="sm:col-span-2 card p-4 bg-romero-gray border-romero-gray-2">
+                    <div className="grid grid-cols-2 gap-y-1.5 text-sm">
+                      <span className="text-romero-gray-3">Subtotal</span>
+                      <span className="text-right font-semibold">{formatMoney(totals.subtotal)}</span>
+                      {b.applyVat && (
+                        <>
+                          <span className="text-romero-gray-3">IVA ({b.vatPct}%)</span>
+                          <span className="text-right font-semibold">{formatMoney(totals.vat)}</span>
+                        </>
+                      )}
+                      <span className="font-bold">Total</span>
+                      <span className="text-right font-extrabold text-base">{formatMoney(totals.total)}</span>
+                      <span className="text-romero-gray-3">Anticipo {b.advancePct}%</span>
+                      <span className="text-right font-semibold">{formatMoney(totals.advance)}</span>
+                      <span className="text-romero-gray-3">Finalización {b.finalPct}%</span>
+                      <span className="text-right font-semibold">{formatMoney(totals.final)}</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </Section>
 

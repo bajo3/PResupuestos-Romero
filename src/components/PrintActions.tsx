@@ -4,7 +4,7 @@ interface Props {
   onBack: () => void
   onEdit: () => void
   clientName?: string
-  docType?: 'presupuesto' | 'recibo'
+  docType?: 'presupuesto' | 'recibo' | 'garantia'
 }
 
 async function downloadPDF(clientName: string, docType: string, setLoading: (v: boolean) => void) {

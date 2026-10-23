@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Budget, makeEmptyBudget } from './types/budget'
 import { Receipt, makeEmptyReceipt } from './types/receipt'
 import {
@@ -12,7 +12,17 @@ import { PrintActions } from './components/PrintActions'
 import { ReceiptList } from './components/ReceiptList'
 import { ReceiptForm } from './components/ReceiptForm'
 import { ReceiptPreview } from './components/ReceiptPreview'
-import { BrandLogo } from './components/BrandLogo'
+import { CrmProvider, DocActions } from './crm/CrmContext'
+import { Shell, NAV } from './crm/Shell'
+import { Dashboard } from './crm/pages/Dashboard'
+import { Caja } from './crm/pages/Caja'
+import { ObrasList, ObraDetail } from './crm/pages/Obras'
+import { Clientes } from './crm/pages/Clientes'
+import { Stock } from './crm/pages/Stock'
+import { Deudas } from './crm/pages/Deudas'
+import { GarantiasList, GarantiaView } from './crm/pages/Garantias'
+import { Reportes } from './crm/pages/Reportes'
+import { Configuracion } from './crm/pages/Configuracion'
 
 // ─── Tipos de vista ───────────────────────────────────────────────────────────
 
@@ -26,55 +36,32 @@ type ReceiptView =
   | { kind: 'form'; receipt: Receipt }
   | { kind: 'preview'; receipt: Receipt }
 
-type Tab = 'budgets' | 'receipts'
+// ─── Ruteo por hash: #/obras/<id> ─────────────────────────────────────────────
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
+function readRoute(): string {
+  const r = window.location.hash.replace(/^#\/?/, '')
+  return r || 'panel'
+}
 
-function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
-  return (
-    <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-romero-gray-2">
-      <div className="mx-auto max-w-2xl px-4">
-        {/* Marca */}
-        <div className="flex items-center gap-3 pt-3 pb-2">
-          <div className="bg-white rounded-xl border-2 border-romero-yellow p-1 shadow-sm">
-            <BrandLogo variant="nav" />
-          </div>
-          <div className="leading-tight min-w-0">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-romero-gray-3 truncate">
-              Especialistas en Impermeabilización
-            </div>
-            <div className="text-base font-extrabold leading-none">Lucas Gallastagui</div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 pb-0">
-          {([
-            { id: 'budgets', label: 'Presupuestos' },
-            { id: 'receipts', label: 'Recibos' },
-          ] as { id: Tab; label: string }[]).map((t) => (
-            <button
-              key={t.id}
-              onClick={() => onChange(t.id)}
-              className={`px-4 py-2.5 text-[13px] font-semibold rounded-t-lg transition-all border-b-2 ${
-                active === t.id
-                  ? 'border-romero-ink text-romero-ink bg-white'
-                  : 'border-transparent text-romero-gray-3 hover:text-romero-ink'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
+function useRoute(): [string, (r: string) => void] {
+  const [route, setRoute] = useState(readRoute)
+  useEffect(() => {
+    const onHash = () => { setRoute(readRoute()); window.scrollTo(0, 0) }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  const navigate = useCallback((r: string) => {
+    if (readRoute() === r) setRoute(r)
+    else window.location.hash = '/' + r
+  }, [])
+  return [route, navigate]
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('budgets')
+  const [route, navigate] = useRoute()
+  const [section, param] = route.split('/')
 
   // Presupuestos
   const [budgets, setBudgets] = useState<Budget[]>(() => loadBudgets())
@@ -83,6 +70,9 @@ export default function App() {
   // Recibos
   const [receipts, setReceipts] = useState<Receipt[]>(() => loadReceipts())
   const [receiptView, setReceiptView] = useState<ReceiptView>({ kind: 'list' })
+
+  /** Ruta a la que vuelve un documento abierto desde otro módulo (p. ej. una obra). */
+  const returnTo = useRef<string | null>(null)
 
   // Sync inicial desde Supabase
   useEffect(() => {
@@ -93,6 +83,22 @@ export default function App() {
   // Persistencia local
   useEffect(() => { saveBudgets(budgets) }, [budgets])
   useEffect(() => { saveReceipts(receipts) }, [receipts])
+
+  // ── Navegación ────────────────────────────────────────────────────────────
+
+  const goSection = useCallback((id: string) => {
+    returnTo.current = null
+    setBudgetView({ kind: 'list' })
+    setReceiptView({ kind: 'list' })
+    navigate(id)
+  }, [navigate])
+
+  const backFromDoc = (fallback: () => void) => {
+    const r = returnTo.current
+    returnTo.current = null
+    if (r) { setBudgetView({ kind: 'list' }); setReceiptView({ kind: 'list' }); navigate(r) }
+    else fallback()
+  }
 
   // ── Presupuestos ──────────────────────────────────────────────────────────
 
@@ -143,8 +149,8 @@ export default function App() {
     })
   }
 
-  const handleNewReceipt = async () => {
-    const r = makeEmptyReceipt()
+  const handleNewReceipt = async (preset: Partial<Receipt> = {}) => {
+    const r = { ...makeEmptyReceipt(), ...preset }
     r.number = await nextReceiptNumberAsync()
     setReceiptView({ kind: 'form', receipt: r })
   }
@@ -160,27 +166,54 @@ export default function App() {
     setReceipts((list) => archiveReceipt(id, list))
   }
 
+  // ── Acciones de documentos para el CRM ────────────────────────────────────
+
+  const budgetsRef = useRef(budgets); budgetsRef.current = budgets
+  const receiptsRef = useRef(receipts); receiptsRef.current = receipts
+
+  const docs = useMemo<DocActions>(() => {
+    const from = () => { const r = readRoute(); returnTo.current = r.startsWith('presupuestos') || r.startsWith('recibos') ? null : r }
+    return {
+      newBudget: () => { from(); navigate('presupuestos'); handleNewBudget() },
+      viewBudget: (id) => {
+        const b = budgetsRef.current.find((x) => x.id === id)
+        if (!b) return
+        from(); navigate('presupuestos'); setBudgetView({ kind: 'preview', budget: b })
+      },
+      newReceipt: (preset) => { from(); navigate('recibos'); handleNewReceipt(preset) },
+      viewReceipt: (id) => {
+        const r = receiptsRef.current.find((x) => x.id === id)
+        if (!r) return
+        from(); navigate('recibos'); setReceiptView({ kind: 'preview', receipt: r })
+      },
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate])
+
   // ── Render ────────────────────────────────────────────────────────────────
 
-  // Presupuesto: formulario
-  if (tab === 'budgets' && budgetView.kind === 'form') {
-    return (
+  const known = NAV.some((n) => n.id === section) ? section : 'panel'
+
+  let content: JSX.Element
+  let bare = false // documentos a pantalla completa, sin menú
+
+  if (known === 'presupuestos' && budgetView.kind === 'form') {
+    bare = true
+    content = (
       <BudgetForm
         initial={budgetView.budget}
-        onCancel={() => setBudgetView({ kind: 'list' })}
+        onCancel={() => backFromDoc(() => setBudgetView({ kind: 'list' }))}
         onSave={(b) => { upsertBudget(b); setBudgetView({ kind: 'preview', budget: b }) }}
         onPreview={(b) => setBudgetView({ kind: 'preview', budget: b })}
       />
     )
-  }
-
-  // Presupuesto: preview
-  if (tab === 'budgets' && budgetView.kind === 'preview') {
+  } else if (known === 'presupuestos' && budgetView.kind === 'preview') {
+    bare = true
     const exists = budgets.some((x) => x.id === budgetView.budget.id)
-    return (
+    content = (
       <>
         <PrintActions
-          onBack={() => setBudgetView({ kind: 'list' })}
+          onBack={() => backFromDoc(() => setBudgetView({ kind: 'list' }))}
           onEdit={() => setBudgetView({ kind: 'form', budget: budgetView.budget })}
           clientName={budgetView.budget.client}
         />
@@ -194,29 +227,21 @@ export default function App() {
         </main>
       </>
     )
-  }
-
-  // Recibo: formulario
-  if (tab === 'receipts' && receiptView.kind === 'form') {
-    return (
-      <>
-        <TabBar active={tab} onChange={(t) => { setTab(t); setReceiptView({ kind: 'list' }) }} />
-        <ReceiptForm
-          initial={receiptView.receipt}
-          budgets={budgets}
-          onCancel={() => setReceiptView({ kind: 'list' })}
-          onSave={(r) => { upsertReceipt(r); setReceiptView({ kind: 'preview', receipt: r }) }}
-        />
-      </>
+  } else if (known === 'recibos' && receiptView.kind === 'form') {
+    content = (
+      <ReceiptForm
+        initial={receiptView.receipt}
+        budgets={budgets}
+        onCancel={() => backFromDoc(() => setReceiptView({ kind: 'list' }))}
+        onSave={(r) => { upsertReceipt(r); setReceiptView({ kind: 'preview', receipt: r }) }}
+      />
     )
-  }
-
-  // Recibo: preview
-  if (tab === 'receipts' && receiptView.kind === 'preview') {
-    return (
+  } else if (known === 'recibos' && receiptView.kind === 'preview') {
+    bare = true
+    content = (
       <>
         <PrintActions
-          onBack={() => setReceiptView({ kind: 'list' })}
+          onBack={() => backFromDoc(() => setReceiptView({ kind: 'list' }))}
           onEdit={() => setReceiptView({ kind: 'form', receipt: receiptView.receipt })}
           clientName={receiptView.receipt.client}
           docType="recibo"
@@ -226,13 +251,16 @@ export default function App() {
         </main>
       </>
     )
-  }
-
-  // Listas (default)
-  return (
-    <div className="min-h-screen">
-      <TabBar active={tab} onChange={(t) => setTab(t)} />
-      {tab === 'budgets' && (
+  } else if (known === 'garantias' && param) {
+    bare = true
+    content = <GarantiaView id={param} />
+  } else {
+    content = {
+      panel: <Dashboard />,
+      caja: <Caja />,
+      obras: param ? <ObraDetail id={param} /> : <ObrasList />,
+      clientes: <Clientes />,
+      presupuestos: (
         <BudgetList
           budgets={budgets}
           onNew={handleNewBudget}
@@ -242,16 +270,27 @@ export default function App() {
           onDelete={handleDeleteBudget}
           onPrint={handleViewBudget}
         />
-      )}
-      {tab === 'receipts' && (
+      ),
+      recibos: (
         <ReceiptList
           receipts={receipts}
-          onNew={handleNewReceipt}
+          onNew={() => handleNewReceipt()}
           onView={handleViewReceipt}
           onEdit={handleEditReceipt}
           onDelete={handleDeleteReceipt}
         />
-      )}
-    </div>
+      ),
+      stock: <Stock />,
+      deudas: <Deudas />,
+      garantias: <GarantiasList />,
+      reportes: <Reportes />,
+      config: <Configuracion />,
+    }[known] ?? <Dashboard />
+  }
+
+  return (
+    <CrmProvider budgets={budgets} receipts={receipts} navigate={navigate} docs={docs}>
+      {bare ? content : <Shell section={known} onGo={goSection}>{content}</Shell>}
+    </CrmProvider>
   )
 }

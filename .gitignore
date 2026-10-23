@@ -5,3 +5,7 @@ dist-ssr
 *.local
 .DS_Store
 mercadolibre-credential
+.vercel
+.env*
+
+pdfs/

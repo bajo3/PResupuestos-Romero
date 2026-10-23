@@ -9,7 +9,7 @@ export interface Budget {
   deliveryTime: string
   workTitle: string
   description: string
-  pricingMode: 'per_m2' | 'fixed'
+  pricingMode: 'per_m2' | 'fixed' | 'pending'
   squareMeters: number
   pricePerM2: number
   fixedPrice: number
@@ -21,6 +21,8 @@ export interface Budget {
   stages: string[]
   materials: string[]
   conditions: string[]
+  /** Fotos comprimidas como data URLs para que el documento sea autocontenido. */
+  photos?: string[]
   notes?: string
   createdAt: number
   updatedAt: number
@@ -72,8 +74,8 @@ export function makeEmptyBudget(): Budget {
     squareMeters: 0,
     pricePerM2: 0,
     fixedPrice: 0,
-    advancePct: 70,
-    finalPct: 30,
+    advancePct: 50,
+    finalPct: 50,
     vatIncluded: false,
     applyVat: false,
     vatPct: 21,
@@ -102,8 +104,8 @@ export function makeDemoBudget(): Budget {
       'Provisión y ejecución de sistema de impermeabilización profesional en encuentros de canaletas de techo principal, mediante colocación de membrana ECO DRY Revestech, aplicada sobre la totalidad de la canaleta de desagüe y puntos de encuentro con chapa existente.',
     squareMeters: 200,
     pricePerM2: 69000,
-    advancePct: 70,
-    finalPct: 30,
+    advancePct: 50,
+    finalPct: 50,
   }
 }
 
@@ -117,7 +119,9 @@ export interface Totals {
 
 export function computeTotals(b: Budget): Totals {
   const subtotal =
-    b.pricingMode === 'fixed'
+    b.pricingMode === 'pending'
+      ? 0
+      : b.pricingMode === 'fixed'
       ? b.fixedPrice || 0
       : (b.squareMeters || 0) * (b.pricePerM2 || 0)
   let vat = 0

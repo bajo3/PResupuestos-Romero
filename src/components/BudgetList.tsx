@@ -100,7 +100,9 @@ export function BudgetList({ budgets, onNew, onView, onEdit, onDuplicate, onDele
                       </div>
                       <div className="text-right shrink-0">
                         <div className="text-[10px] uppercase tracking-wider text-romero-gray-3">Total</div>
-                        <div className="font-extrabold text-[15px]">{formatMoney(tot.total)}</div>
+                        <div className="font-extrabold text-[15px]">
+                          {b.pricingMode === 'pending' ? 'A confirmar' : formatMoney(tot.total)}
+                        </div>
                       </div>
                     </div>
 

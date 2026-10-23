@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test'
 
 async function goHome(page: Page) {
-  await page.goto('/')
+  await page.goto('/#/presupuestos')
   await expect(page.getByText('+ Nuevo presupuesto')).toBeVisible({ timeout: 10_000 })
 }
 
