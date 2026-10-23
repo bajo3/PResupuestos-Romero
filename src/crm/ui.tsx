@@ -12,7 +12,7 @@ export function Page({ title, subtitle, action, children }: {
     <div className="mx-auto max-w-5xl px-4 pt-5 pb-28">
       <div className="flex items-end justify-between gap-3 mb-5">
         <div className="min-w-0">
-          <h1 className="text-[22px] font-extrabold leading-tight">{title}</h1>
+          <h1 className="text-[22px] font-extrabold leading-tight break-words">{title}</h1>
           {subtitle && <p className="text-[13px] text-romero-gray-3 mt-0.5">{subtitle}</p>}
         </div>
         {action && <div className="shrink-0 flex gap-2">{action}</div>}

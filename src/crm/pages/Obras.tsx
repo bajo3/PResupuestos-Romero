@@ -148,14 +148,14 @@ export function ObrasList() {
       {list.length === 0 ? (
         <Empty title="No hay obras" hint="Creá una obra desde un presupuesto aceptado." />
       ) : (
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-[minmax(0,1fr)] sm:grid-cols-2 gap-3">
           {list.map((o) => {
             const f = obraFinance(o, data)
             return (
-              <button key={o.id} onClick={() => navigate('obras/' + o.id)} className="card p-4 text-left hover:border-romero-ink/30 transition">
+              <button key={o.id} onClick={() => navigate('obras/' + o.id)} className="card p-4 text-left min-w-0 w-full overflow-hidden hover:border-romero-ink/30 transition">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="font-bold truncate">{o.name}</div>
+                    <div className="font-bold line-clamp-2 break-words">{o.name}</div>
                     <div className="text-[12px] text-romero-gray-3 truncate">{o.client || 'Sin cliente'}{o.address ? ` · ${o.address}` : ''}</div>
                   </div>
                   <StatusBadge status={o.status} />
@@ -259,7 +259,7 @@ export function ObraDetail({ id }: { id: string }) {
           </div>
           <ProgressBar pct={f.collectedPct} />
         </div>
-        <div className="grid sm:grid-cols-2 gap-3 mt-4">
+        <div className="grid grid-cols-[minmax(0,1fr)] sm:grid-cols-2 gap-3 mt-4">
           <div className="rounded-xl bg-romero-gray p-3">
             <div className="label">Ganancia estimada actual</div>
             <div className={`text-[20px] font-extrabold ${f.estimatedProfit < 0 ? 'text-red-700' : ''}`}>{formatMoney(f.estimatedProfit)}</div>
