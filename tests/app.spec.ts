@@ -190,3 +190,99 @@ test.describe('Carga rápida', () => {
     }
   })
 })
+
+// ─── Textos largos: nada debe salirse del ancho del celular ───────────────────
+
+const LONG = 'Sistema de Impermeabilización Profesional de Canaletas y Encuentros de Techo Principal del Consorcio'
+const WORD = 'Supercalifragilisticoespialidosoimpermeabilizacion1234567890'
+
+function longData() {
+  return {
+        'romero.budgets.v1': [{ ...budget, client: LONG, address: WORD, workTitle: LONG }],
+        'romero.receipts.v1': [{ id: 'r1', number: '001', date: today, obraId: 'o1', client: LONG, address: WORD, amount: 123456789, paymentMethod: 'Transferencia', concept: LONG, ...base }],
+        'lg.crm.obras.v1': [{ id: 'o1', name: LONG, client: LONG, address: WORD, amount: 987654321, status: 'en_ejecucion', startDate: today, endDate: '', notes: LONG, ...base }],
+        'lg.crm.movements.v1': [
+          { id: 'e1', date: today, type: 'egreso', category: 'Mano de obra', amount: 123456789, method: 'Efectivo', description: LONG, obraId: 'o1', ...base },
+          { id: 'e2', date: today, type: 'egreso', category: 'Materiales', amount: 5000, method: 'Efectivo', description: WORD, ...base },
+        ],
+        'lg.crm.debts.v1': [{ id: 'd1', creditor: LONG, description: WORD, amount: 987654321, dueDate: today, obraId: 'o1', ...base }],
+        'lg.crm.stock_items.v1': [{ id: 's1', name: LONG, unit: 'rollo', minStock: 1, unitCost: 100000, ...base }],
+        'lg.crm.stock_moves.v1': [{ id: 'm1', itemId: 's1', date: today, qty: 3, unitCost: 100000, note: WORD, ...base }],
+        'lg.crm.warranties.v1': [{ id: 'w1', number: '001', obraId: 'o1', client: LONG, address: WORD, work: LONG, startDate: today, months: 24, coverage: LONG, exclusions: WORD, ...base }],
+        'lg.clients.v1': [],
+        'romero.clients.v1': [{ id: 'c1', name: LONG, address: WORD, property_type: 'Vivienda', phone: '2494601118', notes: LONG, updated_at: now }],
+  }
+}
+
+async function overflowOf(page: Page): Promise<number> {
+  return page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+}
+
+test.describe('Textos largos', () => {
+  for (const width of [320, 375]) {
+    test(`ninguna pantalla se desborda con textos largos (${width}px)`, async ({ page, isMobile }) => {
+      test.skip(!isMobile)
+      await page.setViewportSize({ width, height: 800 })
+      await seed(page, longData())
+      const routes = ['panel', 'caja', 'obras', 'obras/o1', 'clientes', 'presupuestos', 'recibos', 'stock', 'deudas', 'garantias', 'reportes', 'config']
+      const bad: string[] = []
+      for (const r of routes) {
+        await page.goto('/#/' + r)
+        await page.reload()
+        await page.waitForTimeout(250)
+        const out = await page.evaluate(() => {
+          const vw = document.documentElement.clientWidth
+          const over = document.documentElement.scrollWidth - vw
+          const culprits = [...document.querySelectorAll('main *, body > div *')]
+            .filter((e) => {
+              const r = e.getBoundingClientRect()
+              return r.width > 0 && r.right > vw + 1 && getComputedStyle(e).position !== 'fixed' && !e.closest('.budget-scaler, .overflow-x-auto, nav, [role=dialog]')
+            })
+            .slice(0, 4)
+            .map((e) => `${e.tagName.toLowerCase()}.${String(e.className).slice(0, 45)}«${(e.textContent ?? '').slice(0, 18)}»`)
+          return { over, culprits }
+        })
+        if (out.over > 0) bad.push(`${r}: +${out.over}px ${out.culprits.join(' | ')}`)
+      }
+      expect(bad, bad.join('\n')).toEqual([])
+    })
+  }
+})
+
+test.describe('Formularios con textos largos', () => {
+  test('formularios y vistas no se desbordan en 320px', async ({ page, isMobile }) => {
+    test.skip(!isMobile)
+    await page.setViewportSize({ width: 320, height: 800 })
+    await seed(page, longData())
+    const bad: string[] = []
+    const check = async (name: string) => {
+      await page.waitForTimeout(250)
+      const o = await overflowOf(page)
+      if (o > 0) bad.push(`${name}: +${o}px`)
+    }
+
+    await page.goto('/#/obras/o1')
+    await page.getByRole('button', { name: 'Editar' }).click()
+    await check('editar obra')
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: '+ Gasto' }).click()
+    await check('nuevo gasto')
+    await page.keyboard.press('Escape')
+
+    await page.goto('/#/presupuestos')
+    await page.getByText('👁 Ver').click()
+    await check('presupuesto vista')
+    await page.getByRole('button', { name: /Editar/ }).first().click()
+    await check('presupuesto formulario')
+
+    await page.goto('/#/recibos')
+    await page.getByText('👁 Ver').first().click()
+    await check('recibo vista')
+
+    await page.goto('/#/garantias')
+    await page.getByText('N° 001').first().click()
+    await check('garantía vista')
+
+    expect(bad, bad.join(', ')).toEqual([])
+  })
+})

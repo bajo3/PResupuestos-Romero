@@ -67,6 +67,9 @@ body {
 .btn-ghost   { @apply btn bg-white text-romero-ink border border-romero-gray-2 hover:bg-romero-gray; }
 .btn-danger  { @apply btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-100; }
 
+/* Textos largos (nombres, direcciones, palabras sin espacios) nunca ensanchan la pantalla */
+main, [role=dialog] { overflow-wrap: anywhere; }
+
 /* Links de texto (Editar, Pagar, Anular…): área de toque cómoda en el celular */
 button.underline { padding: 0.55rem 0.45rem; min-height: 40px; }
 

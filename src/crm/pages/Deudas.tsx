@@ -76,7 +76,7 @@ export function Deudas() {
         <div className="card divide-y divide-romero-gray-2">
           {visible.map(({ d, st }) => (
             <div key={d.id} className="px-4 py-3">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="min-w-0">
                   <div className="font-semibold flex flex-wrap items-center gap-2">
                     {d.creditor}
@@ -87,7 +87,7 @@ export function Deudas() {
                   </div>
                   <div className="text-[12px] text-romero-gray-3">Total {formatMoney(d.amount)} · pagado {formatMoney(st.paid)}</div>
                 </div>
-                <div className="text-right shrink-0 font-extrabold">{formatMoney(st.pending)}</div>
+                <div className="sm:text-right shrink-0 font-extrabold text-[17px] sm:text-[16px]">{formatMoney(st.pending)} <span className="sm:hidden text-[12px] font-semibold text-romero-gray-3">pendiente</span></div>
               </div>
               <div className="flex gap-2 mt-3">
                 {st.pending > 0 && (

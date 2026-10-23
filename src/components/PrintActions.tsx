@@ -93,19 +93,20 @@ export function PrintActions({ onBack, onEdit, clientName = '', docType = 'presu
 
   return (
     <div className="no-print sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-romero-gray-2">
-      <div className="mx-auto max-w-5xl px-3 sm:px-6 py-2.5 flex items-center gap-2">
+      <div className="mx-auto max-w-5xl px-3 sm:px-6 py-2.5 flex items-center gap-1.5 sm:gap-2">
         <button onClick={onBack} className="btn-ghost py-2 px-3 text-[13px] whitespace-nowrap">
           ← Volver
         </button>
         <button onClick={onEdit} className="btn-ghost py-2 px-3 text-[13px] whitespace-nowrap">
-          ✏ Editar
+          <span aria-hidden>✏</span><span className="hidden xs:inline">&nbsp;Editar</span><span className="xs:hidden sr-only">Editar</span>
         </button>
         <div className="flex-1" />
         <button
           onClick={() => window.print()}
+          aria-label="Imprimir"
           className="btn-ghost py-2 px-3 text-[13px] whitespace-nowrap"
         >
-          <span className="hidden sm:inline">🖨 </span>Imprimir
+          <span aria-hidden>🖨</span><span className="hidden sm:inline">&nbsp;Imprimir</span>
         </button>
         <button
           onClick={() => downloadPDF(clientName, docType, setLoading)}
