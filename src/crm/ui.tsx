@@ -47,7 +47,7 @@ export function Badge({ children, tone = 'default' }: { children: ReactNode; ton
     warn: 'bg-amber-50 text-amber-700',
     info: 'bg-sky-50 text-sky-700',
   }[tone]
-  return <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${cls}`}>{children}</span>
+  return <span className={`inline-flex items-center shrink-0 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-semibold ${cls}`}>{children}</span>
 }
 
 export const STATUS_TONE = {

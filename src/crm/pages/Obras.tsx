@@ -161,10 +161,10 @@ export function ObrasList() {
                   <StatusBadge status={o.status} />
                 </div>
                 <div className="mt-3"><ProgressBar pct={f.collectedPct} /></div>
-                <div className="grid grid-cols-3 gap-2 mt-3 text-[12px]">
-                  <div><div className="text-romero-gray-3">Total</div><div className="font-bold">{formatMoney(f.total)}</div></div>
-                  <div><div className="text-romero-gray-3">Resta cobrar</div><div className="font-bold">{formatMoney(f.pending)}</div></div>
-                  <div><div className="text-romero-gray-3">Ganancia est.</div><div className={`font-bold ${f.estimatedProfit < 0 ? 'text-red-700' : ''}`}>{formatMoney(f.estimatedProfit)}</div></div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2 mt-3 text-[12px]">
+                  <div><div className="text-romero-gray-3">Total</div><div className="font-bold whitespace-nowrap">{formatMoney(f.total)}</div></div>
+                  <div><div className="text-romero-gray-3">Resta cobrar</div><div className="font-bold whitespace-nowrap">{formatMoney(f.pending)}</div></div>
+                  <div className="col-span-2 sm:col-span-1"><div className="text-romero-gray-3">Ganancia estimada</div><div className={`font-bold whitespace-nowrap ${f.estimatedProfit < 0 ? 'text-red-700' : ''}`}>{formatMoney(f.estimatedProfit)}</div></div>
                 </div>
               </button>
             )
