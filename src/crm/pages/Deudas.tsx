@@ -87,21 +87,19 @@ export function Deudas() {
                   </div>
                   <div className="text-[12px] text-romero-gray-3">Total {formatMoney(d.amount)} · pagado {formatMoney(st.paid)}</div>
                 </div>
-                <div className="text-right shrink-0">
-                  <div className="font-extrabold">{formatMoney(st.pending)}</div>
-                  <div className="flex gap-2 justify-end text-[12px]">
-                    {st.pending > 0 && (
-                      <button className="underline" onClick={() => setPayment(makeMovement({
-                        type: 'egreso', category: 'Pago de deuda', amount: st.pending, debtId: d.id, obraId: d.obraId,
-                        description: `Pago a ${d.creditor}${d.description ? ' · ' + d.description : ''}`,
-                      }))}>Pagar</button>
-                    )}
-                    <button className="underline text-romero-gray-3" onClick={() => setForm(d)}>Editar</button>
-                    {st.paid === 0 && (
-                      <button className="underline text-red-600" onClick={() => { if (confirm('¿Eliminar esta deuda?')) remove('debts', d.id) }}>Eliminar</button>
-                    )}
-                  </div>
-                </div>
+                <div className="text-right shrink-0 font-extrabold">{formatMoney(st.pending)}</div>
+              </div>
+              <div className="flex gap-2 mt-3">
+                {st.pending > 0 && (
+                  <button className="btn-yellow flex-1 py-2.5 text-[14px]" onClick={() => setPayment(makeMovement({
+                    type: 'egreso', category: 'Pago de deuda', amount: st.pending, debtId: d.id, obraId: d.obraId,
+                    description: `Pago a ${d.creditor}${d.description ? ' · ' + d.description : ''}`,
+                  }))}>Pagar</button>
+                )}
+                <button className="btn-ghost flex-1 py-2.5 text-[14px]" onClick={() => setForm(d)}>Editar</button>
+                {st.paid === 0 && (
+                  <button className="btn-danger py-2.5 px-3.5 text-[14px]" aria-label="Eliminar deuda" onClick={() => { if (confirm('¿Eliminar esta deuda?')) remove('debts', d.id) }}>✕</button>
+                )}
               </div>
             </div>
           ))}

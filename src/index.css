@@ -54,7 +54,7 @@ body {
 
 /* Inputs base */
 .input {
-  @apply w-full rounded-xl border border-romero-gray-2 bg-white px-3.5 py-3 text-[15px] outline-none transition focus:border-romero-ink focus:ring-4 focus:ring-romero-yellow/40;
+  @apply w-full rounded-xl border border-romero-gray-2 bg-white px-3.5 py-3 text-[16px] sm:text-[15px] outline-none transition focus:border-romero-ink focus:ring-4 focus:ring-romero-yellow/40;
 }
 .label {
   @apply block text-[12px] font-semibold uppercase tracking-wider text-romero-gray-3 mb-1.5;
@@ -66,6 +66,9 @@ body {
 .btn-yellow  { @apply btn bg-romero-yellow text-romero-ink hover:bg-romero-yellow-deep; }
 .btn-ghost   { @apply btn bg-white text-romero-ink border border-romero-gray-2 hover:bg-romero-gray; }
 .btn-danger  { @apply btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-100; }
+
+/* Links de texto (Editar, Pagar, Anular…): área de toque cómoda en el celular */
+button.underline { padding: 0.55rem 0.45rem; min-height: 40px; }
 
 .card {
   @apply bg-white rounded-2xl border border-romero-gray-2;

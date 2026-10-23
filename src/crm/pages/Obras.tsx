@@ -230,6 +230,20 @@ export function ObraDetail({ id }: { id: string }) {
         {obra.startDate && <span className="text-[12px] text-romero-gray-3">Inicio {formatLongDate(obra.startDate)}</span>}
       </div>
 
+      {/* Acciones */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+        <button className="btn-yellow py-2.5 text-[13px]" onClick={() =>
+          docs.newReceipt({ obraId: obra.id, budgetId: budget?.id, budgetNumber: budget?.number, client: obra.client, address: obra.address, concept: `Pago obra ${obra.name}` })}>
+          + Recibo de cobro
+        </button>
+        <button className="btn-ghost py-2.5 text-[13px]" onClick={() => setMovement(makeMovement({ obraId: obra.id }))}>+ Gasto</button>
+        <button className="btn-ghost py-2.5 text-[13px]" onClick={() => setStockOut(makeStockOut(obra.id))}>+ Material de stock</button>
+        <button className="btn-ghost py-2.5 text-[13px]" onClick={() =>
+          setWarranty(makeWarranty({ obraId: obra.id, client: obra.client, address: obra.address, work: budget?.workTitle ?? obra.name, startDate: obra.endDate || today() }))}>
+          + Garantía
+        </button>
+      </div>
+
       {/* Resumen financiero */}
       <div className="card p-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -259,20 +273,6 @@ export function ObraDetail({ id }: { id: string }) {
             <div className="text-[12px] text-romero-gray-3 mt-1">Cobrado menos gastos: lo que efectivamente quedó hasta ahora.</div>
           </div>
         </div>
-      </div>
-
-      {/* Acciones */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
-        <button className="btn-yellow py-2.5 text-[13px]" onClick={() =>
-          docs.newReceipt({ obraId: obra.id, budgetId: budget?.id, budgetNumber: budget?.number, client: obra.client, address: obra.address, concept: `Pago obra ${obra.name}` })}>
-          + Recibo de cobro
-        </button>
-        <button className="btn-ghost py-2.5 text-[13px]" onClick={() => setMovement(makeMovement({ obraId: obra.id }))}>+ Gasto</button>
-        <button className="btn-ghost py-2.5 text-[13px]" onClick={() => setStockOut(makeStockOut(obra.id))}>+ Material de stock</button>
-        <button className="btn-ghost py-2.5 text-[13px]" onClick={() =>
-          setWarranty(makeWarranty({ obraId: obra.id, client: obra.client, address: obra.address, work: budget?.workTitle ?? obra.name, startDate: obra.endDate || today() }))}>
-          + Garantía
-        </button>
       </div>
 
       {/* Detalle */}

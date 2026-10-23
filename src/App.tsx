@@ -228,6 +228,7 @@ export default function App() {
       </>
     )
   } else if (known === 'recibos' && receiptView.kind === 'form') {
+    bare = true
     content = (
       <ReceiptForm
         initial={receiptView.receipt}

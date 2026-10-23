@@ -189,11 +189,11 @@ export function Stock() {
                   </button>
                   <div className="text-right shrink-0">
                     <div className={`font-extrabold ${qty <= 0 ? 'text-red-700' : ''}`}>{formatNumber(qty, 2)} {i.unit}</div>
-                    <div className="flex gap-2 text-[12px] justify-end">
-                      <button className="underline" onClick={() => setPurchase(i)}>Compra</button>
-                      <button className="underline text-romero-gray-3" onClick={() => setItemForm(i)}>Editar</button>
-                    </div>
                   </div>
+                </div>
+                <div className="flex gap-2 px-4 pb-3">
+                  <button className="btn-yellow flex-1 py-2 text-[13px]" onClick={() => setPurchase(i)}>+ Compra</button>
+                  <button className="btn-ghost flex-1 py-2 text-[13px]" onClick={() => setItemForm(i)}>Editar</button>
                 </div>
                 {detail === i.id && (
                   <div className="bg-romero-gray px-4 py-2 text-[13px]">

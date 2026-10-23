@@ -155,3 +155,38 @@ test.describe('Deudas', () => {
     await expect(page.getByText('Pago a Corralón')).toBeVisible()
   })
 })
+
+// ─── Uso rápido (celular y escritorio) ────────────────────────────────────────
+
+test.describe('Carga rápida', () => {
+  test('el botón "+" carga un gasto en 4 toques y baja la caja', async ({ page }) => {
+    await page.goto('/#/panel')
+    await page.getByRole('button', { name: 'Cargar rápido' }).locator('visible=true').first().click()
+    await page.getByRole('dialog', { name: 'Cargar rápido' }).getByText('Salió plata').click()
+    await page.keyboard.type('85000')
+    await page.getByRole('button', { name: 'Guardar' }).click()
+    await page.goto('/#/caja')
+    await expect(page.getByText('− $ 85.000,00')).toBeVisible()
+  })
+
+  test('en el celular la barra de abajo navega entre secciones', async ({ page, isMobile }) => {
+    test.skip(!isMobile)
+    await page.goto('/#/panel')
+    const nav = page.locator('nav').last()
+    await nav.getByRole('button', { name: 'Caja' }).click()
+    await expect(page.getByText('Plata en caja')).toBeVisible()
+    await nav.getByRole('button', { name: 'Más' }).click()
+    await page.getByRole('dialog', { name: 'Más secciones' }).getByText('Deudas').click()
+    await expect(page.getByText('Deudas de la empresa')).toBeVisible()
+  })
+
+  test('ninguna pantalla se sale del ancho del celular', async ({ page, isMobile }) => {
+    test.skip(!isMobile)
+    for (const r of ['panel', 'caja', 'obras', 'clientes', 'presupuestos', 'recibos', 'stock', 'deudas', 'garantias', 'reportes', 'config']) {
+      await page.goto('/#/' + r)
+      await page.waitForTimeout(150)
+      const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+      expect(over, r).toBeLessThanOrEqual(0)
+    }
+  })
+})

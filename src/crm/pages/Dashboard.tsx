@@ -62,19 +62,18 @@ export function Dashboard() {
   return (
     <Page title="Panel general" subtitle="Resumen de la empresa">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="Dinero en caja" value={formatMoney(s.cash.balance)} tone={s.cash.balance < 0 ? 'bad' : 'default'}
-          hint={`Efectivo ${formatMoney(s.cash.byMethod.Efectivo)}`} />
+        <div className="col-span-2 lg:col-span-1">
+          <Stat label="Dinero en caja" value={formatMoney(s.cash.balance)} tone={s.cash.balance < 0 ? 'bad' : 'default'}
+            hint={`Efectivo ${formatMoney(s.cash.byMethod.Efectivo)}`} />
+        </div>
         <Stat label="Deudas pendientes" value={formatMoney(s.debtTotal)} tone={s.debtTotal > 0 ? 'bad' : 'default'}
           hint={`${s.debts.length} deuda(s)`} />
+        <Stat label="Disponible" value={formatMoney(s.cash.balance - s.debtTotal)} tone={s.cash.balance - s.debtTotal < 0 ? 'bad' : 'default'}
+          hint="Caja − deudas" />
         <Stat label="Obras activas" value={String(s.activeObras.length)} hint={`Resta cobrar ${formatMoney(s.toCollectTotal)}`} />
         <Stat label="Presupuestos pendientes" value={String(s.pending.length)} hint={formatMoney(s.pendingTotal)} />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-        <Stat label="Ganancia estimada" value={formatMoney(s.estimated)} hint="Presupuestos − gastos de obras en curso y finalizadas" />
-        <Stat label="Ganancia real" value={formatMoney(s.real)} tone={s.real < 0 ? 'bad' : 'good'} hint="Cobrado − gastos de las obras" />
-        <Stat label="Disponible" value={formatMoney(s.cash.balance - s.debtTotal)} tone={s.cash.balance - s.debtTotal < 0 ? 'bad' : 'default'}
-          hint="Caja − deudas pendientes" />
+        <Stat label="Ganancia estimada" value={formatMoney(s.estimated)} hint="Presupuesto − gastos" />
+        <Stat label="Ganancia real" value={formatMoney(s.real)} tone={s.real < 0 ? 'bad' : 'good'} hint="Cobrado − gastos" />
       </div>
 
       <h2 className="font-bold text-[15px] mt-7 mb-3">Alertas</h2>
@@ -83,9 +82,9 @@ export function Dashboard() {
       ) : (
         <div className="card divide-y divide-romero-gray-2">
           {alerts.map((a) => (
-            <button key={a.key} onClick={() => navigate(a.to)} className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-romero-gray">
+            <button key={a.key} onClick={() => navigate(a.to)} className="w-full text-left px-4 py-3 flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-3 hover:bg-romero-gray">
               <Badge tone={a.tone}>{a.tag}</Badge>
-              <span className="text-[14px] truncate">{a.text}</span>
+              <span className="text-[14px] sm:truncate">{a.text}</span>
             </button>
           ))}
         </div>

@@ -595,6 +595,7 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
             {b.pricingMode === 'pending' ? 'A confirmar' : formatMoney(totals.total)}
           </span>
         </div>
+        {errors.length > 0 && <div className="text-[11px] font-semibold text-amber-700 mb-2">Falta: {errors.join(' · ')}</div>}
         <div className="flex gap-2">
           <button onClick={() => onPreview({ ...b, updatedAt: Date.now() })} className="btn-ghost flex-1">
             Vista previa

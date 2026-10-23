@@ -88,31 +88,6 @@ export function ReceiptForm({ initial, budgets, onCancel, onSave }: Props) {
       </div>
 
       <div className="space-y-4">
-        {/* Datos del recibo */}
-        <div className="card p-4 space-y-3">
-          <div className="font-bold text-[15px] mb-1">Datos del recibo</div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Número</label>
-              <input
-                className="input"
-                value={r.number}
-                onChange={(e) => set('number', e.target.value)}
-                placeholder="001"
-              />
-            </div>
-            <div>
-              <label className="label">Fecha</label>
-              <input
-                type="date"
-                className="input"
-                value={r.date}
-                onChange={(e) => set('date', e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Vincular presupuesto */}
         <div className="card p-4">
           <div className="font-bold text-[15px] mb-3">Vincular a presupuesto</div>
@@ -247,6 +222,31 @@ export function ReceiptForm({ initial, budgets, onCancel, onSave }: Props) {
               onChange={(e) => set('notes', e.target.value)}
               placeholder="Datos adicionales..."
             />
+          </div>
+        </div>
+
+        {/* Datos del recibo */}
+        <div className="card p-4 space-y-3">
+          <div className="font-bold text-[15px] mb-1">Datos del recibo</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Número</label>
+              <input
+                className="input"
+                value={r.number}
+                onChange={(e) => set('number', e.target.value)}
+                placeholder="001"
+              />
+            </div>
+            <div>
+              <label className="label">Fecha</label>
+              <input
+                type="date"
+                className="input"
+                value={r.date}
+                onChange={(e) => set('date', e.target.value)}
+              />
+            </div>
           </div>
         </div>
 

@@ -1,0 +1,17 @@
+{
+  "name": "CRM LG",
+  "short_name": "CRM LG",
+  "description": "Gestión de obras · Lucas Gallastagui Impermeabilizaciones",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4F4F5",
+  "theme_color": "#FFD60A",
+  "icons": [
+    {
+      "src": "/logo-lucas-gallastagui.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

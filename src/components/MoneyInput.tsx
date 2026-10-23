@@ -49,7 +49,7 @@ export function MoneyInput({ value, onChange, placeholder, prefix = '$', classNa
           setText(text.trim() === '' ? '' : formatNumber(n, 0))
           onChange(n)
         }}
-        className="flex-1 py-3 pr-3.5 text-[15px] outline-none bg-transparent min-w-0"
+        className="flex-1 py-3 pr-3.5 text-[16px] sm:text-[15px] outline-none bg-transparent min-w-0"
       />
     </div>
   )
