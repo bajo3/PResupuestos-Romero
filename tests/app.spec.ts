@@ -449,3 +449,17 @@ test.describe('Fotos', () => {
     await expect(page.getByRole('img', { name: 'Ticket' })).toBeVisible()
   })
 })
+
+test.describe('Sin conexión', () => {
+  test('la app abre sin internet después de la primera visita', async ({ page, context, browserName }) => {
+    test.skip(browserName !== 'chromium')
+    await page.goto('/')
+    await page.evaluate(() => navigator.serviceWorker.ready)
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Panel general' })).toBeVisible()
+    await context.setOffline(true)
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Panel general' })).toBeVisible()
+    await expect(page.getByText('Sin conexión')).toBeVisible()
+  })
+})

@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { BrandLogo } from '../components/BrandLogo'
 import { useCrm } from './CrmContext'
 import { MovementForm, makeMovement } from './MovementForm'
@@ -59,9 +59,22 @@ function NavList({ section, onGo, ids }: { section: string; onGo: (id: string) =
 
 type Sheet = null | 'quick' | 'more'
 
+function useOnline(): boolean {
+  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
+  useEffect(() => {
+    const on = () => setOnline(true)
+    const off = () => setOnline(false)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
+  return online
+}
+
 export function Shell({ section, onGo, children }: { section: string; onGo: (id: string) => void; children: ReactNode }) {
   const { docs, navigate } = useCrm()
   const [sheet, setSheet] = useState<Sheet>(null)
+  const online = useOnline()
   const [movement, setMovement] = useState<Movement | null>(null)
   const [obra, setObra] = useState<Obra | null>(null)
 
@@ -86,6 +99,11 @@ export function Shell({ section, onGo, children }: { section: string; onGo: (id:
         <NavList section={section} onGo={go} />
       </aside>
 
+      {!online && (
+        <div className="sticky top-0 z-30 bg-amber-100 border-b border-amber-200 px-4 py-2 text-[12px] font-semibold text-amber-900 text-center">
+          Sin conexión: lo que cargues se guarda en este dispositivo y se sube solo cuando vuelva internet.
+        </div>
+      )}
       <main className="pb-20 lg:pb-0">{children}</main>
 
       {/* Botón rápido (celular) */}
