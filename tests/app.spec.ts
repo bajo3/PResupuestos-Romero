@@ -308,3 +308,35 @@ test.describe('Empezar de cero', () => {
     await expect(page.getByText('Aún no hay presupuestos')).toBeVisible()
   })
 })
+
+test.describe('Stock editable', () => {
+  const stockSeed = {
+    'lg.crm.stock_items.v1': [{ id: 's1', name: 'Membrana', unit: 'rollo', minStock: 0, unitCost: 100000, ...base }],
+    'lg.crm.stock_moves.v1': [{ id: 'm1', itemId: 's1', date: today, qty: 10, unitCost: 100000, note: 'Compra', ...base }],
+    'lg.crm.movements.v1': [{ id: 'e0', date: today, type: 'egreso', category: 'Materiales', amount: 1000000, method: 'Efectivo', description: 'Compra stock', stockMoveId: 'm1', ...base }],
+  }
+
+  test('ajustar la cantidad registra la diferencia y no mueve la caja', async ({ page }) => {
+    await seed(page, stockSeed)
+    await page.goto('/#/stock')
+    await page.getByRole('button', { name: 'Ajustar' }).click()
+    await page.getByRole('dialog').locator('input').first().fill('8')
+    await expect(page.getByText('-2,00 rollo')).toBeVisible()
+    await page.getByRole('button', { name: 'Guardar ajuste' }).click()
+    await expect(page.getByText('8,00 rollo').first()).toBeVisible()
+    await page.goto('/#/caja')
+    await expect(page.getByText('$ -1.000.000,00').first()).toBeVisible()
+  })
+
+  test('editar una compra corrige también el egreso de caja', async ({ page }) => {
+    await seed(page, stockSeed)
+    await page.goto('/#/stock')
+    await page.getByText('Membrana').first().click()
+    await page.getByRole('button', { name: 'Editar' }).last().click()
+    await page.getByRole('dialog').locator('input').first().fill('12')
+    await page.getByRole('button', { name: 'Guardar' }).click()
+    await expect(page.getByText('12,00 rollo').first()).toBeVisible()
+    await page.goto('/#/caja')
+    await expect(page.getByText('− $ 1.200.000,00')).toBeVisible()
+  })
+})

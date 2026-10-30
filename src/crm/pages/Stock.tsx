@@ -144,6 +144,97 @@ export function StockOutForm({ initial, onClose }: { initial: StockMove; onClose
   )
 }
 
+/** Corrige la cantidad: se carga lo que hay realmente y se registra la diferencia como ajuste. */
+function AdjustForm({ item, onClose }: { item: StockItem; onClose: () => void }) {
+  const { save, data } = useCrm()
+  const current = stockQty(item, data)
+  const [real, setReal] = useState(String(current))
+  const [note, setNote] = useState('')
+  const target = num(real)
+  const diff = target - current
+
+  return (
+    <Modal title={`Ajustar · ${item.name}`} onClose={onClose}
+      footer={<>
+        <button className="btn-ghost flex-1" onClick={onClose}>Cancelar</button>
+        <button className="btn-primary flex-1" disabled={diff === 0 || real.trim() === ''}
+          onClick={() => {
+            save('stock_moves', makeMove({ itemId: item.id, qty: diff, unitCost: item.unitCost, note: note.trim() ? `Ajuste: ${note.trim()}` : 'Ajuste de stock' }))
+            onClose()
+          }}>
+          Guardar ajuste
+        </button>
+      </>}>
+      <p className="text-[13px] text-romero-gray-3">En el sistema hay <b className="text-romero-ink">{formatNumber(current, 2)} {item.unit}</b>.</p>
+      <Field label={`Cantidad real en depósito (${item.unit})`}>
+        <input className="input text-[18px] font-bold" inputMode="decimal" autoFocus value={real} onChange={(e) => setReal(e.target.value)} />
+      </Field>
+      <Field label="Motivo (opcional)">
+        <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Conteo, pérdida, rotura…" />
+      </Field>
+      {diff !== 0 && real.trim() !== '' && (
+        <p className="text-[13px] font-semibold">
+          Se registra un ajuste de <span className={diff > 0 ? 'text-emerald-700' : 'text-red-700'}>{diff > 0 ? '+' : ''}{formatNumber(diff, 2)} {item.unit}</span>. No mueve la caja.
+        </p>
+      )}
+    </Modal>
+  )
+}
+
+/** Edita un movimiento ya cargado. Si era una compra, también corrige el egreso de caja. */
+function EditMoveForm({ move, onClose }: { move: StockMove; onClose: () => void }) {
+  const { save, data } = useCrm()
+  const item = data.stock_items.find((i) => i.id === move.itemId)
+  const linked = data.movements.find((x) => x.stockMoveId === move.id && !x.voided)
+  const isEntry = move.qty > 0
+  const [qty, setQty] = useState(String(Math.abs(move.qty)))
+  const [unitCost, setUnitCost] = useState(move.unitCost)
+  const [date, setDate] = useState(move.date)
+  const [note, setNote] = useState(move.note)
+  const [obraId, setObraId] = useState<string | undefined>(move.obraId)
+  const q = num(qty)
+
+  const submit = () => {
+    const signed = isEntry ? q : -q
+    save('stock_moves', { ...move, qty: signed, unitCost: isEntry ? unitCost : move.unitCost, date, note, obraId: isEntry ? undefined : obraId })
+    if (linked) save('movements', { ...linked, amount: q * unitCost, date })
+    onClose()
+  }
+
+  return (
+    <Modal title={isEntry ? 'Editar entrada de stock' : 'Editar salida de stock'} onClose={onClose}
+      footer={<>
+        <button className="btn-ghost flex-1" onClick={onClose}>Cancelar</button>
+        <button className="btn-primary flex-1" disabled={q <= 0} onClick={submit}>Guardar</button>
+      </>}>
+      <p className="text-[13px] text-romero-gray-3">{item?.name ?? 'Material'}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={`Cantidad${item ? ` (${item.unit})` : ''}`}>
+          <input className="input" inputMode="decimal" autoFocus value={qty} onChange={(e) => setQty(e.target.value)} />
+        </Field>
+        <Field label="Fecha">
+          <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
+        </Field>
+      </div>
+      {isEntry ? (
+        <Field label="Costo unitario">
+          <MoneyInput value={unitCost} onChange={setUnitCost} />
+        </Field>
+      ) : (
+        <Field label="Obra">
+          <ObraSelect value={obraId} onChange={setObraId} emptyLabel="— Ajuste / pérdida (sin obra) —" />
+        </Field>
+      )}
+      <Field label="Nota">
+        <input className="input" value={note} onChange={(e) => setNote(e.target.value)} />
+      </Field>
+      {isEntry && linked && (
+        <p className="text-[12px] text-romero-gray-3">Esta compra salió de caja: el egreso se corrige a {formatMoney(q * unitCost)}.</p>
+      )}
+    </Modal>
+  )
+}
+
 // ─── Página ───────────────────────────────────────────────────────────────────
 
 export function Stock() {
@@ -152,6 +243,8 @@ export function Stock() {
   const [purchase, setPurchase] = useState<StockItem | null>(null)
   const [out, setOut] = useState<StockMove | null>(null)
   const [detail, setDetail] = useState<string | null>(null)
+  const [adjust, setAdjust] = useState<StockItem | null>(null)
+  const [editMove, setEditMove] = useState<StockMove | null>(null)
 
   const items = useMemo(() => [...data.stock_items].sort((a, b) => a.name.localeCompare(b.name)), [data.stock_items])
   const value = items.reduce((a, i) => a + Math.max(0, stockQty(i, data)) * i.unitCost, 0)
@@ -193,6 +286,7 @@ export function Stock() {
                 </div>
                 <div className="flex gap-2 px-4 pb-3">
                   <button className="btn-yellow flex-1 py-2 text-[13px]" onClick={() => setPurchase(i)}>+ Compra</button>
+                  <button className="btn-ghost flex-1 py-2 text-[13px]" onClick={() => setAdjust(i)}>Ajustar</button>
                   <button className="btn-ghost flex-1 py-2 text-[13px]" onClick={() => setItemForm(i)}>Editar</button>
                 </div>
                 {detail === i.id && (
@@ -204,7 +298,8 @@ export function Stock() {
                         </span>
                         <span className="shrink-0">
                           <b className={m.qty > 0 ? 'text-emerald-700' : 'text-red-700'}>{m.qty > 0 ? '+' : ''}{formatNumber(m.qty, 2)}</b>
-                          <button className="ml-2 underline text-red-600 text-[12px]" onClick={() => removeMove(m)}>Eliminar</button>
+                          <button className="ml-1 underline text-[12px]" onClick={() => setEditMove(m)}>Editar</button>
+                          <button className="underline text-red-600 text-[12px]" onClick={() => removeMove(m)}>Eliminar</button>
                         </span>
                       </div>
                     ))}
@@ -224,6 +319,8 @@ export function Stock() {
       {itemForm && <ItemForm initial={itemForm} onClose={() => setItemForm(null)} />}
       {purchase && <PurchaseForm item={purchase} onClose={() => setPurchase(null)} />}
       {out && <StockOutForm initial={out} onClose={() => setOut(null)} />}
+      {adjust && <AdjustForm item={adjust} onClose={() => setAdjust(null)} />}
+      {editMove && <EditMoveForm move={editMove} onClose={() => setEditMove(null)} />}
     </Page>
   )
 }
