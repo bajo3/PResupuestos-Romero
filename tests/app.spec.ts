@@ -151,6 +151,7 @@ test.describe('Deudas', () => {
     await page.getByRole('dialog').locator('input[inputmode="numeric"]').first().fill('200000')
     await page.getByRole('button', { name: 'Guardar' }).click()
     await expect(page.getByText('$ 300.000,00').first()).toBeVisible()
+    await expect(page.getByText('Pagos (1)')).toBeVisible()
     await page.goto('/#/caja')
     await expect(page.getByText('Pago a Corralón')).toBeVisible()
   })

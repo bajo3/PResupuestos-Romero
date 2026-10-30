@@ -101,6 +101,17 @@ export function Deudas() {
                   <button className="btn-danger py-2.5 px-3.5 text-[14px]" aria-label="Eliminar deuda" onClick={() => { if (confirm('¿Eliminar esta deuda?')) remove('debts', d.id) }}>✕</button>
                 )}
               </div>
+              {st.payments.length > 0 && (
+                <div className="mt-3 rounded-xl bg-romero-gray px-3 py-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-romero-gray-3 mb-1">Pagos ({st.payments.length})</div>
+                  {[...st.payments].sort((a, b) => b.date.localeCompare(a.date)).map((p) => (
+                    <div key={p.id} className="flex items-baseline justify-between gap-3 py-0.5 text-[13px]">
+                      <span className="text-romero-gray-3">{formatLongDate(p.date)} · {p.method}</span>
+                      <b className="tabular-nums shrink-0">{formatMoney(p.amount)}</b>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
