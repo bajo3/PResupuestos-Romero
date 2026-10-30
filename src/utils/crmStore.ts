@@ -20,6 +20,25 @@ export function setCurrentUser(name: string): void {
   } catch { /* ignore */ }
 }
 
+// ─── Alerta de sobrecosto ─────────────────────────────────────────────────────
+
+const OVERRUN_KEY = 'lg.overrunPct.v1'
+
+/** % del presupuesto gastado a partir del cual se avisa (por defecto 80). */
+export function getOverrunPct(): number {
+  try {
+    const n = Number(localStorage.getItem(OVERRUN_KEY))
+    if (n > 0 && n <= 200) return n
+  } catch { /* ignore */ }
+  return 80
+}
+
+export function setOverrunPct(n: number): void {
+  try {
+    localStorage.setItem(OVERRUN_KEY, String(n))
+  } catch { /* ignore */ }
+}
+
 // ─── Local ────────────────────────────────────────────────────────────────────
 
 function readKind<T>(kind: CrmKind): T[] {

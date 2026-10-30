@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Field, Page } from '../ui'
-import { getCurrentUser, setCurrentUser } from '../../utils/crmStore'
+import { getCurrentUser, setCurrentUser, getOverrunPct, setOverrunPct } from '../../utils/crmStore'
 import { supabase } from '../../utils/supabase'
 import { resetEverything } from '../../utils/reset'
 
@@ -9,6 +9,8 @@ export function Configuracion() {
   const [saved, setSaved] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [overrun, setOverrun] = useState(String(getOverrunPct()))
+  const [overrunSaved, setOverrunSaved] = useState(false)
 
   const onReset = async () => {
     if (!confirm('Esto deja el CRM en cero: se archivan todos los presupuestos, recibos, obras, caja, deudas, stock y garantías. ¿Continuar?')) return
@@ -33,6 +35,16 @@ export function Configuracion() {
         </p>
         <button className="btn-primary" onClick={() => { setCurrentUser(user); setSaved(true) }}>
           {saved ? 'Guardado ✓' : 'Guardar'}
+        </button>
+      </div>
+
+      <div className="card p-4 mt-4 space-y-3">
+        <div className="font-bold text-[15px]">Alerta de sobrecosto</div>
+        <Field label="Avisar cuando los gastos de una obra pasen este % del presupuesto">
+          <input className="input" inputMode="numeric" value={overrun} onChange={(e) => { setOverrun(e.target.value.replace(/\D/g, '')); setOverrunSaved(false) }} />
+        </Field>
+        <button className="btn-primary" disabled={!(Number(overrun) > 0 && Number(overrun) <= 200)} onClick={() => { setOverrunPct(Number(overrun)); setOverrunSaved(true) }}>
+          {overrunSaved ? 'Guardado ✓' : 'Guardar'}
         </button>
       </div>
 

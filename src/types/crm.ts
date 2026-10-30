@@ -50,10 +50,11 @@ export const EXPENSE_CATEGORIES = [
   'Pago de deuda',
   'Sueldos',
   'Gastos generales',
+  'Diferencia de caja',
   'Otros',
 ]
 
-export const INCOME_CATEGORIES = ['Cobro de obra', 'Aporte de capital', 'Otros ingresos']
+export const INCOME_CATEGORIES = ['Cobro de obra', 'Aporte de capital', 'Diferencia de caja', 'Otros ingresos']
 
 export interface Movement extends BaseRecord {
   date: string

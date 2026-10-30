@@ -8,6 +8,7 @@ import { Movement, Obra, ObraStatus, OBRA_STATUS_LABEL, StockMove, Warranty, new
 import { computeTotals } from '../../types/budget'
 import { obraFinance, obraMaterials, obraReceipts } from '../../utils/crmCalc'
 import { MoneyInput } from '../../components/MoneyInput'
+import { getOverrunPct } from '../../utils/crmStore'
 import { formatMoney, formatLongDate, formatNumber } from '../../utils/money'
 
 export function makeObra(preset: Partial<Obra> = {}): Obra {
@@ -197,6 +198,7 @@ export function ObraDetail({ id }: { id: string }) {
   }
 
   const f = obraFinance(obra, data)
+  const overrun = getOverrunPct()
   const budget = obra.budgetId ? data.budgets.find((b) => b.id === obra.budgetId) : undefined
   const receipts = obraReceipts(obra, data)
   const incomes = data.movements.filter((m) => m.obraId === obra.id && m.type === 'ingreso')
@@ -259,6 +261,18 @@ export function ObraDetail({ id }: { id: string }) {
           </div>
           <ProgressBar pct={f.collectedPct} />
         </div>
+        {f.total > 0 && (
+          <div className="mt-3">
+            <div className="flex justify-between text-[12px] mb-1">
+              <span className="text-romero-gray-3">Gastado del presupuesto</span>
+              <b className={f.expensesPct >= 100 ? 'text-red-700' : f.expensesPct >= overrun ? 'text-amber-700' : ''}>{formatNumber(f.expensesPct)}%</b>
+            </div>
+            <div className="h-2 rounded-full bg-romero-gray overflow-hidden">
+              <div className={`h-full ${f.expensesPct >= 100 ? 'bg-red-500' : f.expensesPct >= overrun ? 'bg-amber-500' : 'bg-romero-ink/70'}`} style={{ width: `${Math.min(100, f.expensesPct)}%` }} />
+            </div>
+            {f.expensesPct >= overrun && <div className="text-[12px] font-semibold text-amber-700 mt-1">{f.expensesPct >= 100 ? 'Los gastos superan el presupuesto.' : `Los gastos pasaron el ${overrun}% del presupuesto.`}</div>}
+          </div>
+        )}
         <div className="grid grid-cols-[minmax(0,1fr)] sm:grid-cols-2 gap-3 mt-4">
           <div className="rounded-xl bg-romero-gray p-3">
             <div className="label">Ganancia estimada actual</div>

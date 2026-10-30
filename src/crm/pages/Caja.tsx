@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCrm } from '../CrmContext'
-import { Page } from '../ui'
+import { Field, Modal, Page } from '../ui'
+import { MoneyInput } from '../../components/MoneyInput'
 import { MovementForm, makeMovement } from '../MovementForm'
 import { cashEntries, cashSummary } from '../../utils/crmCalc'
 import { Movement, today, toLocalIso } from '../../types/crm'
@@ -30,8 +31,44 @@ function dayLabel(iso: string): string {
   return `${d} de ${MESES[m - 1]}`
 }
 
+/** Cierre de caja: se cuenta el efectivo y la diferencia queda registrada como ajuste. */
+function CloseCashForm({ system, onClose }: { system: number; onClose: () => void }) {
+  const { save } = useCrm()
+  const [counted, setCounted] = useState(system > 0 ? system : 0)
+  const diff = counted - system
+
+  return (
+    <Modal title="Cerrar caja" onClose={onClose}
+      footer={<>
+        <button className="btn-ghost flex-1" onClick={onClose}>Cancelar</button>
+        <button className="btn-primary flex-1" onClick={() => {
+          if (diff !== 0) {
+            save('movements', makeMovement({
+              type: diff > 0 ? 'ingreso' : 'egreso', category: 'Diferencia de caja', amount: Math.abs(diff), method: 'Efectivo',
+              description: `Cierre de caja: ${diff > 0 ? 'sobrante' : 'faltante'} (sistema ${formatMoney(system)}, contado ${formatMoney(counted)})`,
+            }))
+          }
+          onClose()
+        }}>{diff === 0 ? 'Caja cuadrada' : 'Registrar diferencia'}</button>
+      </>}>
+      <p className="text-[13px] text-romero-gray-3">Según el sistema tenés <b className="text-romero-ink">{formatMoney(system)}</b> en efectivo.</p>
+      <Field label="Efectivo que contaste">
+        <MoneyInput value={counted} onChange={setCounted} autoFocus className="[&_input]:text-[20px] [&_input]:font-bold" />
+      </Field>
+      {diff === 0 ? (
+        <p className="text-[14px] font-semibold text-emerald-700">La caja está cuadrada ✓</p>
+      ) : (
+        <p className={`text-[14px] font-semibold ${diff > 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+          {diff > 0 ? 'Sobrante' : 'Faltante'} de {formatMoney(Math.abs(diff))}: se registra como "Diferencia de caja".
+        </p>
+      )}
+    </Modal>
+  )
+}
+
 export function Caja() {
   const { data, docs, obraById } = useCrm()
+  const [closing, setClosing] = useState(false)
   const [editing, setEditing] = useState<Movement | null>(null)
   const [filter, setFilter] = useState<Filter>('todo')
   const [month, setMonth] = useState(() => today().slice(0, 7))
@@ -93,6 +130,8 @@ export function Caja() {
           − Salió plata
         </button>
       </div>
+
+      <button className="btn-ghost w-full mt-3 py-3 text-[14px]" onClick={() => setClosing(true)}>Cerrar caja (contar efectivo)</button>
 
       {/* Mes */}
       <div className="flex items-center justify-between mt-6">
@@ -167,6 +206,7 @@ export function Caja() {
         </div>
       )}
 
+      {closing && <CloseCashForm system={total.byMethod.Efectivo} onClose={() => setClosing(false)} />}
       {editing && <MovementForm initial={editing} onClose={() => setEditing(null)} lockType={!!editing.debtId} />}
     </Page>
   )

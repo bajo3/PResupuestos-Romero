@@ -5,6 +5,7 @@ import { cashEntries, cashSummary, daysUntil, debtStatus, isLowStock, obraFinanc
 import { computeTotals } from '../../types/budget'
 import { formatMoney, formatLongDate, formatUsd } from '../../utils/money'
 import { useBlueRate } from '../../utils/dolar'
+import { getOverrunPct } from '../../utils/crmStore'
 
 export function Dashboard() {
   const { data, navigate } = useCrm()
@@ -37,7 +38,20 @@ export function Dashboard() {
 
   const cheques = cashEntries(data).filter((e) => !e.voided && e.pendingCheque && !!e.chequeDate && daysUntil(e.chequeDate) <= 7)
 
+  const overrun = getOverrunPct()
+  const overruns = data.obras
+    .filter((o) => o.status === 'en_ejecucion')
+    .map((o) => ({ o, f: obraFinance(o, data) }))
+    .filter((x) => x.f.total > 0 && x.f.expensesPct >= overrun)
+
   const alerts = [
+    ...overruns.map(({ o, f }) => ({
+      key: 'x' + o.id,
+      tone: f.expensesPct >= 100 ? ('bad' as const) : ('warn' as const),
+      tag: f.expensesPct >= 100 ? 'Sobrecosto' : 'Gastos altos',
+      text: `${o.name} · gastos al ${Math.round(f.expensesPct)}% del presupuesto`,
+      to: 'obras/' + o.id,
+    })),
     ...cheques.map((e) => ({
       key: 'c' + e.id,
       tone: 'info' as const,

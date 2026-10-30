@@ -393,3 +393,29 @@ test.describe('Cheques con fecha', () => {
     await expect(page.getByText('$ 500.000,00').first()).toBeVisible()
   })
 })
+
+test.describe('Sobrecosto y cierre de caja', () => {
+  test('avisa cuando los gastos de una obra pasan el 80% del presupuesto', async ({ page }) => {
+    await seed(page, {
+      'lg.crm.obras.v1': [{ id: 'o1', name: 'Reforma', client: 'Lucas', address: '', amount: 1000000, status: 'en_ejecucion', startDate: today, endDate: '', notes: '', ...base }],
+      'lg.crm.movements.v1': [{ id: 'e1', date: today, type: 'egreso', category: 'Mano de obra', amount: 900000, method: 'Efectivo', description: 'Cuadrilla', obraId: 'o1', ...base }],
+    })
+    await page.goto('/#/panel')
+    await expect(page.getByText('Reforma · gastos al 90% del presupuesto')).toBeVisible()
+    await page.goto('/#/obras/o1')
+    await expect(page.getByText('Los gastos pasaron el 80% del presupuesto.')).toBeVisible()
+  })
+
+  test('el cierre de caja registra el faltante como ajuste', async ({ page }) => {
+    await seed(page, {
+      'lg.crm.movements.v1': [{ id: 'i1', date: today, type: 'ingreso', category: 'Aporte de capital', amount: 100000, method: 'Efectivo', description: 'Capital', ...base }],
+    })
+    await page.goto('/#/caja')
+    await page.getByRole('button', { name: 'Cerrar caja (contar efectivo)' }).click()
+    await page.getByRole('dialog').locator('input').first().fill('90000')
+    await expect(page.getByText('Faltante de $ 10.000,00')).toBeVisible()
+    await page.getByRole('button', { name: 'Registrar diferencia' }).click()
+    await expect(page.getByText('Diferencia de caja').first()).toBeVisible()
+    await expect(page.getByText('$ 90.000,00').first()).toBeVisible()
+  })
+})

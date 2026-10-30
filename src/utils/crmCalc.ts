@@ -71,6 +71,8 @@ export interface ObraFinance {
   collected: number
   expenses: number
   stockMaterials: number
+  /** Gastos como % del presupuesto (0 si no hay presupuesto). */
+  expensesPct: number
   pending: number
   collectedPct: number
   /** Presupuesto − gastos registrados. */
@@ -96,6 +98,7 @@ export function obraFinance(obra: Obra, d: CrmData): ObraFinance {
     collected,
     expenses,
     stockMaterials,
+    expensesPct: total > 0 ? (expenses / total) * 100 : 0,
     pending: Math.max(0, total - collected),
     collectedPct: total > 0 ? Math.min(100, (collected / total) * 100) : 0,
     estimatedProfit: total - expenses,
