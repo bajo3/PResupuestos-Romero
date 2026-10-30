@@ -102,8 +102,25 @@ function PendingScreen({ profile, onRetry }: { profile: Profile | null; onRetry:
   )
 }
 
-/** Pide ingresar antes de mostrar la app. Sin Supabase configurado (desarrollo, tests) no pide nada. */
+/** El login está apagado: para prenderlo, definir VITE_REQUIRE_LOGIN=true en Vercel y volver a publicar. */
+const LOGIN_ENABLED = import.meta.env.VITE_REQUIRE_LOGIN === 'true'
+
+/** Sin login: solo aplica el reinicio compartido y muestra la app. */
+function OpenAccess({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(!supabase)
+  useEffect(() => {
+    if (supabase) void applyRemoteReset().finally(() => setReady(true))
+  }, [])
+  return ready ? <>{children}</> : null
+}
+
+/** Pide ingresar antes de mostrar la app (si el login está prendido). */
 export function AuthGate({ children }: { children: ReactNode }) {
+  if (!LOGIN_ENABLED) return <OpenAccess>{children}</OpenAccess>
+  return <LoginGate>{children}</LoginGate>
+}
+
+function LoginGate({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<Phase>(supabase ? 'loading' : 'ready')
   const [profile, setProfile] = useState<Profile | null>(null)
   const userId = useRef<string | null>(null)
