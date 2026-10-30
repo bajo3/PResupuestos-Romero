@@ -340,3 +340,24 @@ test.describe('Stock editable', () => {
     await expect(page.getByText('− $ 1.200.000,00')).toBeVisible()
   })
 })
+
+test.describe('Deudas en dólares', () => {
+  test('una deuda en US$ se paga con la cotización y baja el pendiente en dólares', async ({ page }) => {
+    await page.route('**/dolarapi.com/**', (r) => r.fulfill({ json: { moneda: 'USD', casa: 'blue', nombre: 'Blue', compra: 1500, venta: 1600, fechaActualizacion: new Date().toISOString() } }))
+    await seed(page, {
+      'lg.crm.debts.v1': [{ id: 'd1', creditor: 'Proveedor USA', description: '', amount: 1000, currency: 'USD', dueDate: today, ...base }],
+    })
+    await page.goto('/#/deudas')
+    await expect(page.getByText('US$ 1.000,00').first()).toBeVisible()
+    await expect(page.getByText('≈ $ 1.600.000,00')).toBeVisible()
+    await page.getByRole('button', { name: 'Pagar' }).click()
+    const dlg = page.getByRole('dialog')
+    await dlg.locator('input[inputmode="numeric"]').first().fill('400')
+    await expect(dlg.getByText('$ 640.000,00')).toBeVisible()
+    await page.getByRole('button', { name: 'Guardar' }).click()
+    await expect(page.getByText('US$ 600,00').first()).toBeVisible()
+    await expect(page.getByText('Pagos (1)')).toBeVisible()
+    await page.goto('/#/caja')
+    await expect(page.getByText('− $ 640.000,00')).toBeVisible()
+  })
+})

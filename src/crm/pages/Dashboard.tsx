@@ -3,14 +3,16 @@ import { useCrm } from '../CrmContext'
 import { Badge, Page, Stat } from '../ui'
 import { cashEntries, cashSummary, debtStatus, isLowStock, obraFinance, pendingBudgets, stockQty } from '../../utils/crmCalc'
 import { computeTotals } from '../../types/budget'
-import { formatMoney, formatLongDate } from '../../utils/money'
+import { formatMoney, formatLongDate, formatUsd } from '../../utils/money'
+import { useBlueRate } from '../../utils/dolar'
 
 export function Dashboard() {
   const { data, navigate } = useCrm()
+  const blue = useBlueRate()?.venta ?? 0
 
   const s = useMemo(() => {
     const cash = cashSummary(cashEntries(data))
-    const debts = data.debts.map((d) => ({ d, st: debtStatus(d, data) })).filter((x) => x.st.pending > 0)
+    const debts = data.debts.map((d) => ({ d, st: debtStatus(d, data, blue) })).filter((x) => x.st.pending > 0)
     const activeObras = data.obras.filter((o) => o.status === 'en_ejecucion')
     const obrasFin = data.obras
       .filter((o) => o.status !== 'cancelada')
@@ -21,7 +23,7 @@ export function Dashboard() {
     return {
       cash,
       debts,
-      debtTotal: debts.reduce((a, x) => a + x.st.pending, 0),
+      debtTotal: debts.reduce((a, x) => a + x.st.pendingArs, 0),
       activeObras,
       pending,
       pendingTotal: pending.reduce((a, b) => a + computeTotals(b).total, 0),
@@ -31,7 +33,7 @@ export function Dashboard() {
       toCollectTotal: toCollect.reduce((a, x) => a + x.f.pending, 0),
       low,
     }
-  }, [data])
+  }, [data, blue])
 
   const alerts = [
     ...s.debts
@@ -40,7 +42,7 @@ export function Dashboard() {
         key: 'd' + x.d.id,
         tone: x.st.overdue ? ('bad' as const) : ('warn' as const),
         tag: x.st.overdue ? 'Deuda vencida' : 'Deuda por vencer',
-        text: `${x.d.creditor} · ${formatMoney(x.st.pending)} · vence ${formatLongDate(x.d.dueDate)}`,
+        text: `${x.d.creditor} · ${x.st.currency === 'USD' ? formatUsd(x.st.pending) : formatMoney(x.st.pending)} · vence ${formatLongDate(x.d.dueDate)}`,
         to: 'deudas',
       })),
     ...s.toCollect.map((x) => ({

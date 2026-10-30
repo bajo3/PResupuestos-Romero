@@ -179,21 +179,30 @@ export function cashSummary(entries: CashEntry[]): CashSummary {
 // ─── Deudas ───────────────────────────────────────────────────────────────────
 
 export interface DebtStatus {
+  /** En la moneda de la deuda. */
   paid: number
   pending: number
+  currency: 'ARS' | 'USD'
+  /** Pendiente expresado en pesos (si es USD, a la cotización recibida). */
+  pendingArs: number
   overdue: boolean
   dueSoon: boolean
   payments: Movement[]
 }
 
-export function debtStatus(debt: Debt, d: CrmData): DebtStatus {
+export function debtStatus(debt: Debt, d: CrmData, rate = 0): DebtStatus {
+  const currency = debt.currency === 'USD' ? 'USD' : 'ARS'
   const payments = activeMovements(d).filter((m) => m.debtId === debt.id && m.type === 'egreso')
-  const paid = sum(payments.map((m) => m.amount))
+  const paid = currency === 'USD'
+    ? sum(payments.map((m) => m.usd ?? (m.rate ? m.amount / m.rate : 0)))
+    : sum(payments.map((m) => m.amount))
   const pending = Math.max(0, debt.amount - paid)
   const days = debt.dueDate ? daysUntil(debt.dueDate) : Infinity
   return {
     paid,
     pending,
+    currency,
+    pendingArs: currency === 'USD' ? pending * rate : pending,
     overdue: pending > 0 && days < 0,
     dueSoon: pending > 0 && days >= 0 && days <= 7,
     payments,

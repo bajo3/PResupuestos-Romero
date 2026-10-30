@@ -65,6 +65,9 @@ export interface Movement extends BaseRecord {
   obraId?: string
   debtId?: string
   stockMoveId?: string
+  /** Pago de una deuda en dólares: monto en US$ y cotización usada. `amount` queda en pesos. */
+  usd?: number
+  rate?: number
   voided?: boolean
   voidedAt?: number
   voidedBy?: string
@@ -77,6 +80,8 @@ export interface Debt extends BaseRecord {
   amount: number
   dueDate: string
   obraId?: string
+  /** Moneda de la deuda; sin valor = pesos. Si es USD, `amount` está en dólares. */
+  currency?: 'ARS' | 'USD'
 }
 
 export interface StockItem extends BaseRecord {

@@ -73,8 +73,11 @@ export function MovementForm({ initial, onClose, lockType }: {
       )}
 
       <Field label="Monto">
-        <MoneyInput value={m.amount} onChange={(n) => set('amount', n)} placeholder="0" autoFocus className="[&_input]:text-[20px] [&_input]:font-bold" />
+        <div className={m.usd ? 'pointer-events-none opacity-60' : ''}>
+          <MoneyInput value={m.amount} onChange={(n) => set('amount', n)} placeholder="0" autoFocus className="[&_input]:text-[20px] [&_input]:font-bold" />
+        </div>
       </Field>
+      {m.usd ? <p className="text-[12px] text-romero-gray-3">Pago de deuda en dólares ({m.usd} US$ a $ {m.rate}). Para cambiar el monto, anulalo y volvelo a cargar desde Deudas.</p> : null}
 
       <Field label="Detalle">
         <input

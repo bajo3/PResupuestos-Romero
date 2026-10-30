@@ -8,6 +8,11 @@ export function formatMoney(value: number): string {
   return '$ ' + nf.format(value || 0)
 }
 
+export function formatUsd(value: number): string {
+  if (!isFinite(value)) return 'US$ 0,00'
+  return 'US$ ' + nf.format(value || 0)
+}
+
 export function formatNumber(value: number, digits = 0): string {
   return new Intl.NumberFormat('es-AR', {
     minimumFractionDigits: digits,
