@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { BrandLogo } from '../components/BrandLogo'
 import { useCrm } from './CrmContext'
+import { useAuth } from '../auth/AuthContext'
 import { MovementForm, makeMovement } from './MovementForm'
 import { ObraForm, makeObra } from './pages/Obras'
 import { Movement, Obra } from '../types/crm'
@@ -38,8 +39,8 @@ function Brand() {
   )
 }
 
-function NavList({ section, onGo, ids }: { section: string; onGo: (id: string) => void; ids?: string[] }) {
-  const items = ids ? NAV.filter((n) => ids.includes(n.id)) : NAV
+function NavList({ section, onGo, ids, allow }: { section: string; onGo: (id: string) => void; ids?: string[]; allow: (id: string) => boolean }) {
+  const items = (ids ? NAV.filter((n) => ids.includes(n.id)) : NAV).filter((n) => allow(n.id))
   return (
     <nav className="flex flex-col gap-0.5">
       {items.map((n) => (
@@ -73,6 +74,8 @@ function useOnline(): boolean {
 
 export function Shell({ section, onGo, children }: { section: string; onGo: (id: string) => void; children: ReactNode }) {
   const { docs, navigate } = useCrm()
+  const { can } = useAuth()
+  const canMoney = can('caja')
   const [sheet, setSheet] = useState<Sheet>(null)
   const online = useOnline()
   const [movement, setMovement] = useState<Movement | null>(null)
@@ -80,7 +83,8 @@ export function Shell({ section, onGo, children }: { section: string; onGo: (id:
 
   const go = (id: string) => { setSheet(null); onGo(id) }
   const quick = (fn: () => void) => () => { setSheet(null); fn() }
-  const inMore = !TABS.some((t) => t.id === section)
+  const tabs = TABS.filter((t) => can(t.id))
+  const inMore = !tabs.some((t) => t.id === section)
 
   const quickActions: { label: string; hint: string; tone: string; run: () => void }[] = [
     { label: 'Entró plata', hint: 'Cobro, seña, aporte', tone: 'bg-emerald-600 text-white', run: () => setMovement(makeMovement({ type: 'ingreso', category: 'Cobro de obra' })) },
@@ -95,8 +99,8 @@ export function Shell({ section, onGo, children }: { section: string; onGo: (id:
       {/* Sidebar desktop */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 flex-col gap-5 border-r border-romero-gray-2 bg-white px-3 py-4 overflow-y-auto">
         <div className="px-1"><Brand /></div>
-        <button className="btn-yellow w-full" onClick={() => setSheet('quick')}>+ Cargar rápido</button>
-        <NavList section={section} onGo={go} />
+        {canMoney && <button className="btn-yellow w-full" onClick={() => setSheet('quick')}>+ Cargar rápido</button>}
+        <NavList section={section} onGo={go} allow={can} />
       </aside>
 
       {!online && (
@@ -107,20 +111,20 @@ export function Shell({ section, onGo, children }: { section: string; onGo: (id:
       <main className="pb-20 lg:pb-0">{children}</main>
 
       {/* Botón rápido (celular) */}
-      <button
+      {canMoney && <button
         onClick={() => setSheet('quick')}
         aria-label="Cargar rápido"
         className="lg:hidden fixed right-4 bottom-[76px] z-30 h-14 w-14 rounded-full bg-romero-yellow text-romero-ink text-[30px] font-light leading-none shadow-lg shadow-black/25 active:scale-95 transition"
       >
         +
-      </button>
+      </button>}
 
       {/* Barra inferior (celular) */}
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-5 border-t border-romero-gray-2 bg-white/95 backdrop-blur"
+        className={`lg:hidden fixed bottom-0 inset-x-0 z-30 grid ${tabs.length === 4 ? 'grid-cols-5' : tabs.length === 3 ? 'grid-cols-4' : 'grid-cols-3'} border-t border-romero-gray-2 bg-white/95 backdrop-blur`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => go(t.id)}
@@ -170,7 +174,7 @@ export function Shell({ section, onGo, children }: { section: string; onGo: (id:
             role="dialog"
             aria-label="Más secciones"
           >
-            <NavList section={section} onGo={go} ids={['presupuestos', 'recibos', 'stock', 'deudas', 'garantias', 'reportes', 'config']} />
+            <NavList section={section} onGo={go} allow={can} ids={['presupuestos', 'recibos', 'stock', 'deudas', 'garantias', 'reportes', 'config']} />
           </div>
         </div>
       )}

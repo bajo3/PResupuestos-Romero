@@ -10,6 +10,7 @@ import { obraFinance, obraMaterials, obraReceipts } from '../../utils/crmCalc'
 import { MoneyInput } from '../../components/MoneyInput'
 import { getOverrunPct } from '../../utils/crmStore'
 import { compressPhoto } from '../../utils/photos'
+import { useAuth } from '../../auth/AuthContext'
 import { formatMoney, formatLongDate, formatNumber } from '../../utils/money'
 
 const MAX_OBRA_PHOTOS = 12
@@ -185,6 +186,7 @@ export function ObrasList() {
 
 export function ObraDetail({ id }: { id: string }) {
   const { data, navigate, docs, remove, voidMovement, save } = useCrm()
+  const money = useAuth().can('caja')
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoError, setPhotoError] = useState('')
   const [viewPhoto, setViewPhoto] = useState<number | null>(null)
@@ -194,6 +196,7 @@ export function ObraDetail({ id }: { id: string }) {
   const [stockOut, setStockOut] = useState<StockMove | null>(null)
   const [warranty, setWarranty] = useState<Warranty | null>(null)
   const [tab, setTab] = useState<'cobros' | 'gastos' | 'materiales' | 'garantias'>('cobros')
+  const tabNow = !money && (tab === 'cobros' || tab === 'gastos') ? 'materiales' : tab
 
   if (!obra) {
     return (
@@ -240,11 +243,11 @@ export function ObraDetail({ id }: { id: string }) {
 
       {/* Acciones */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-        <button className="btn-yellow py-2.5 text-[13px]" onClick={() =>
+        {money && <button className="btn-yellow py-2.5 text-[13px]" onClick={() =>
           docs.newReceipt({ obraId: obra.id, budgetId: budget?.id, budgetNumber: budget?.number, client: obra.client, address: obra.address, concept: `Pago obra ${obra.name}` })}>
           + Recibo de cobro
-        </button>
-        <button className="btn-ghost py-2.5 text-[13px]" onClick={() => setMovement(makeMovement({ obraId: obra.id }))}>+ Gasto</button>
+        </button>}
+        {money && <button className="btn-ghost py-2.5 text-[13px]" onClick={() => setMovement(makeMovement({ obraId: obra.id }))}>+ Gasto</button>}
         <button className="btn-ghost py-2.5 text-[13px]" onClick={() => setStockOut(makeStockOut(obra.id))}>+ Material de stock</button>
         <button className="btn-ghost py-2.5 text-[13px]" onClick={() =>
           setWarranty(makeWarranty({ obraId: obra.id, client: obra.client, address: obra.address, work: budget?.workTitle ?? obra.name, startDate: obra.endDate || today() }))}>
@@ -252,6 +255,7 @@ export function ObraDetail({ id }: { id: string }) {
         </button>
       </div>
 
+      {money && <>
       {/* Resumen financiero */}
       <div className="card p-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -295,18 +299,19 @@ export function ObraDetail({ id }: { id: string }) {
         </div>
       </div>
 
+      </>}
+
       {/* Detalle */}
       <div className="mt-6">
-        <Segmented value={tab} onChange={setTab} options={[
-          { value: 'cobros', label: `Cobros (${receipts.length + incomes.length})` },
-          { value: 'gastos', label: `Gastos (${expenses.length})` },
+        <Segmented value={tabNow} onChange={setTab} options={[
+          ...(money ? [{ value: 'cobros' as const, label: `Cobros (${receipts.length + incomes.length})` }, { value: 'gastos' as const, label: `Gastos (${expenses.length})` }] : []),
           { value: 'materiales', label: `Materiales (${materials.length})` },
           { value: 'garantias', label: `Garantías (${warranties.length})` },
         ]} />
       </div>
 
       <div className="mt-3">
-        {tab === 'cobros' && (
+        {tabNow === 'cobros' && (
           receipts.length + incomes.length === 0 ? <Empty title="Sin cobros registrados" /> : (
             <div className="card divide-y divide-romero-gray-2">
               {receipts.map((r) => (
@@ -322,14 +327,14 @@ export function ObraDetail({ id }: { id: string }) {
             </div>
           )
         )}
-        {tab === 'gastos' && (
+        {tabNow === 'gastos' && (
           expenses.length === 0 ? <Empty title="Sin gastos registrados" /> : (
             <div className="card divide-y divide-romero-gray-2">
               {expenses.map((m) => <MovementRow key={m.id} m={m} onEdit={() => setMovement(m)} onVoid={() => onVoid(m)} />)}
             </div>
           )
         )}
-        {tab === 'materiales' && (
+        {tabNow === 'materiales' && (
           materials.length === 0 ? <Empty title="Sin materiales" hint="Asigná materiales del stock o registrá un gasto en la categoría Materiales." /> : (
             <div className="card divide-y divide-romero-gray-2">
               {materials.map((mt) => (
@@ -355,7 +360,7 @@ export function ObraDetail({ id }: { id: string }) {
             </div>
           )
         )}
-        {tab === 'garantias' && (
+        {tabNow === 'garantias' && (
           warranties.length === 0 ? <Empty title="Sin garantías" /> : (
             <div className="card divide-y divide-romero-gray-2">
               {warranties.map((w) => (

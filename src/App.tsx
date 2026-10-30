@@ -13,6 +13,7 @@ import { ReceiptList } from './components/ReceiptList'
 import { ReceiptForm } from './components/ReceiptForm'
 import { ReceiptPreview } from './components/ReceiptPreview'
 import { CrmProvider, DocActions } from './crm/CrmContext'
+import { useAuth } from './auth/AuthContext'
 import { Shell, NAV } from './crm/Shell'
 import { Dashboard } from './crm/pages/Dashboard'
 import { Caja } from './crm/pages/Caja'
@@ -61,6 +62,7 @@ function useRoute(): [string, (r: string) => void] {
 
 export default function App() {
   const [route, navigate] = useRoute()
+  const { can } = useAuth()
   const [section, param] = route.split('/')
 
   // Presupuestos
@@ -192,7 +194,8 @@ export default function App() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const known = NAV.some((n) => n.id === section) ? section : 'panel'
+  const wanted = NAV.some((n) => n.id === section) ? section : 'panel'
+  const known = can(wanted) ? wanted : (NAV.find((n) => can(n.id))?.id ?? 'obras')
 
   let content: JSX.Element
   let bare = false // documentos a pantalla completa, sin menú
