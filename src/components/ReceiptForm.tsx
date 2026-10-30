@@ -204,6 +204,14 @@ export function ReceiptForm({ initial, budgets, onCancel, onSave }: Props) {
             </div>
           </div>
 
+          {r.paymentMethod === 'Cheque' && (
+            <div>
+              <label className="label">Fecha de cobro del cheque</label>
+              <input type="date" className="input" value={r.chequeDate ?? ''} onChange={(e) => set('chequeDate', e.target.value || undefined)} />
+              <p className="text-[12px] text-romero-gray-3 mt-1">Hasta esa fecha el cheque no suma a la caja.</p>
+            </div>
+          )}
+
           <div>
             <label className="label">Concepto *</label>
             <input

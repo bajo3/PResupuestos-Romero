@@ -13,6 +13,8 @@ export interface Receipt {
   address: string
   amount: number
   paymentMethod: PaymentMethod
+  /** Si se pagó con cheque: fecha de cobro. */
+  chequeDate?: string
   concept: string
   notes?: string
   createdAt: number

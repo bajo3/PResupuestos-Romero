@@ -92,6 +92,13 @@ export function MovementForm({ initial, onClose, lockType }: {
         <Segmented value={m.method} onChange={(v) => set('method', v)} options={METHODS.map((x) => ({ value: x, label: x }))} />
       </Field>
 
+      {m.method === 'Cheque' && (
+        <Field label={m.type === 'ingreso' ? 'Fecha de cobro del cheque' : 'Fecha en que se debita'}>
+          <input type="date" className="input" value={m.chequeDate ?? ''} onChange={(e) => set('chequeDate', e.target.value || undefined)} />
+          <p className="text-[12px] text-romero-gray-3 mt-1">Hasta esa fecha el cheque no suma ni resta de la caja.</p>
+        </Field>
+      )}
+
       <Field label="Obra (si es de una obra)">
         <ObraSelect value={m.obraId} onChange={(id) => set('obraId', id)} emptyLabel="— Gasto general —" />
       </Field>

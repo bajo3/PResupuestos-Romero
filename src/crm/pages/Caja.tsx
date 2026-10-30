@@ -4,7 +4,7 @@ import { Page } from '../ui'
 import { MovementForm, makeMovement } from '../MovementForm'
 import { cashEntries, cashSummary } from '../../utils/crmCalc'
 import { Movement, today, toLocalIso } from '../../types/crm'
-import { formatMoney } from '../../utils/money'
+import { formatMoney, formatLongDate } from '../../utils/money'
 
 type Filter = 'todo' | 'ingreso' | 'egreso'
 
@@ -65,6 +65,11 @@ export function Caja() {
         <div className={`text-[32px] font-extrabold leading-tight tabular-nums ${total.balance < 0 ? 'text-red-700' : ''}`}>
           {formatMoney(total.balance)}
         </div>
+        {(total.chequesIn > 0 || total.chequesOut > 0) && (
+          <div className="text-[12px] font-semibold text-sky-700 mt-1">
+            Cheques pendientes:{total.chequesIn > 0 ? ` a cobrar ${formatMoney(total.chequesIn)}` : ''}{total.chequesOut > 0 ? ` · a pagar ${formatMoney(total.chequesOut)}` : ''} (no suman a la caja hasta su fecha)
+          </div>
+        )}
         <div className="text-[13px] text-romero-gray-3 mt-1 flex flex-wrap gap-x-4">
           <span>Efectivo <b className="text-romero-ink">{formatMoney(total.byMethod.Efectivo)}</b></span>
           {otherMethods.map((k) => (
@@ -133,7 +138,8 @@ export function Caja() {
                   const obra = obraById(e.obraId)
                   const editable = !!e.movement && !e.voided && !e.movement.stockMoveId
                   const onClick = e.receipt ? () => docs.viewReceipt(e.receipt!.id) : editable ? () => setEditing(e.movement!) : undefined
-                  const sub = [e.source === 'recibo' ? 'Recibo' : e.category, obra?.name, e.method].filter(Boolean).join(' · ')
+                  const chequeTxt = e.method === 'Cheque' && e.chequeDate ? `${e.type === 'ingreso' ? 'cobra' : 'se debita'} ${formatLongDate(e.chequeDate)}` : null
+                  const sub = [e.source === 'recibo' ? 'Recibo' : e.category, obra?.name, e.method, chequeTxt].filter(Boolean).join(' · ')
                   return (
                     <button
                       key={e.id}

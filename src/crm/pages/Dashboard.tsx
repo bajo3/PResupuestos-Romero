@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useCrm } from '../CrmContext'
 import { Badge, Page, Stat } from '../ui'
-import { cashEntries, cashSummary, debtStatus, isLowStock, obraFinance, pendingBudgets, stockQty } from '../../utils/crmCalc'
+import { cashEntries, cashSummary, daysUntil, debtStatus, isLowStock, obraFinance, pendingBudgets, stockQty } from '../../utils/crmCalc'
 import { computeTotals } from '../../types/budget'
 import { formatMoney, formatLongDate, formatUsd } from '../../utils/money'
 import { useBlueRate } from '../../utils/dolar'
@@ -35,7 +35,16 @@ export function Dashboard() {
     }
   }, [data, blue])
 
+  const cheques = cashEntries(data).filter((e) => !e.voided && e.pendingCheque && !!e.chequeDate && daysUntil(e.chequeDate) <= 7)
+
   const alerts = [
+    ...cheques.map((e) => ({
+      key: 'c' + e.id,
+      tone: 'info' as const,
+      tag: e.type === 'ingreso' ? 'Cheque por cobrar' : 'Cheque por pagar',
+      text: `${formatMoney(e.amount)} · ${e.type === 'ingreso' ? 'cobra' : 'se debita'} ${formatLongDate(e.chequeDate!)}`,
+      to: 'caja',
+    })),
     ...s.debts
       .filter((x) => x.st.overdue || x.st.dueSoon)
       .map((x) => ({

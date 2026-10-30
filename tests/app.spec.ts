@@ -361,3 +361,35 @@ test.describe('Deudas en dólares', () => {
     await expect(page.getByText('− $ 640.000,00')).toBeVisible()
   })
 })
+
+test.describe('Cheques con fecha', () => {
+  const future = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 20)
+    const p = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+  })()
+
+  test('un cheque a futuro no suma a la caja hasta su fecha', async ({ page }) => {
+    await seed(page, {
+      'lg.crm.movements.v1': [
+        { id: 'i1', date: today, type: 'ingreso', category: 'Cobro de obra', amount: 500000, method: 'Cheque', chequeDate: future, description: 'Cheque seña', ...base },
+        { id: 'i2', date: today, type: 'ingreso', category: 'Cobro de obra', amount: 100000, method: 'Efectivo', description: 'Efectivo', ...base },
+      ],
+    })
+    await page.goto('/#/caja')
+    await expect(page.getByText('Plata en caja')).toBeVisible()
+    await expect(page.getByText('Cheques pendientes: a cobrar $ 500.000,00')).toBeVisible()
+    await expect(page.getByText('$ 100.000,00').first()).toBeVisible()
+    await expect(page.getByText('$ 600.000,00')).toHaveCount(0)
+  })
+
+  test('un cheque que ya llegó a su fecha sí suma', async ({ page }) => {
+    await seed(page, {
+      'lg.crm.movements.v1': [{ id: 'i1', date: today, type: 'ingreso', category: 'Cobro de obra', amount: 500000, method: 'Cheque', chequeDate: today, description: 'Cheque seña', ...base }],
+    })
+    await page.goto('/#/caja')
+    await expect(page.getByText('Cheques pendientes')).toHaveCount(0)
+    await expect(page.getByText('$ 500.000,00').first()).toBeVisible()
+  })
+})

@@ -116,10 +116,16 @@ export interface CashEntry {
   description: string
   obraId?: string
   source: 'movimiento' | 'recibo'
+  /** Cheque con fecha de cobro futura: todavía no suma a la caja. */
+  chequeDate?: string
+  pendingCheque?: boolean
   voided?: boolean
   movement?: Movement
   receipt?: Receipt
 }
+
+const isPendingCheque = (method: MovementMethod, chequeDate?: string) =>
+  method === 'Cheque' && !!chequeDate && chequeDate > toLocalIso(new Date())
 
 export function cashEntries(d: CrmData): CashEntry[] {
   const fromReceipts: CashEntry[] = d.receipts.map((r) => {
@@ -134,6 +140,8 @@ export function cashEntries(d: CrmData): CashEntry[] {
       description: `Recibo N° ${r.number} · ${r.client}${r.concept ? ' · ' + r.concept : ''}`,
       obraId: obra?.id,
       source: 'recibo',
+      chequeDate: r.chequeDate,
+      pendingCheque: isPendingCheque(r.paymentMethod, r.chequeDate),
       receipt: r,
     }
   })
@@ -147,6 +155,8 @@ export function cashEntries(d: CrmData): CashEntry[] {
     description: m.description,
     obraId: m.obraId,
     source: 'movimiento',
+    chequeDate: m.chequeDate,
+    pendingCheque: isPendingCheque(m.method, m.chequeDate),
     voided: m.voided,
     movement: m,
   }))
@@ -160,20 +170,30 @@ export interface CashSummary {
   expense: number
   balance: number
   byMethod: Record<MovementMethod, number>
+  /** Cheques con fecha futura (no incluidos en lo anterior). */
+  chequesIn: number
+  chequesOut: number
 }
 
 export function cashSummary(entries: CashEntry[]): CashSummary {
   const byMethod: Record<MovementMethod, number> = { Efectivo: 0, Transferencia: 0, Cheque: 0 }
   let income = 0
   let expense = 0
+  let chequesIn = 0
+  let chequesOut = 0
   for (const e of entries) {
     if (e.voided) continue
+    if (e.pendingCheque) {
+      if (e.type === 'ingreso') chequesIn += e.amount
+      else chequesOut += e.amount
+      continue
+    }
     const signed = e.type === 'ingreso' ? e.amount : -e.amount
     if (e.type === 'ingreso') income += e.amount
     else expense += e.amount
     byMethod[e.method] = (byMethod[e.method] ?? 0) + signed
   }
-  return { income, expense, balance: income - expense, byMethod }
+  return { income, expense, balance: income - expense, byMethod, chequesIn, chequesOut }
 }
 
 // ─── Deudas ───────────────────────────────────────────────────────────────────

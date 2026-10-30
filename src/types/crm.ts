@@ -68,6 +68,8 @@ export interface Movement extends BaseRecord {
   /** Pago de una deuda en dólares: monto en US$ y cotización usada. `amount` queda en pesos. */
   usd?: number
   rate?: number
+  /** Cheque: fecha en que se cobra (ingreso) o se debita (egreso). Hasta entonces no suma a la caja. */
+  chequeDate?: string
   voided?: boolean
   voidedAt?: number
   voidedBy?: string
