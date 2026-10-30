@@ -286,3 +286,24 @@ test.describe('Formularios con textos largos', () => {
     expect(bad, bad.join(', ')).toEqual([])
   })
 })
+
+test.describe('Empezar de cero', () => {
+  test('el botón de Configuración deja el CRM vacío', async ({ page }) => {
+    await page.goto('/#/caja')
+    // Se carga una sola vez (addInitScript volvería a cargarlo después del reinicio)
+    await page.evaluate(([mov, bud]) => {
+      localStorage.setItem('lg.crm.movements.v1', JSON.stringify([mov]))
+      localStorage.setItem('romero.budgets.v1', JSON.stringify([bud]))
+    }, [{ id: 'e1', date: today, type: 'egreso', category: 'Materiales', amount: 5000, method: 'Efectivo', description: 'Algo', ...base }, budget])
+    await page.reload()
+    await expect(page.getByText('Algo')).toBeVisible()
+    await page.goto('/#/config')
+    page.on('dialog', (d) => (d.type() === 'prompt' ? d.accept('BORRAR') : d.accept()))
+    await page.getByRole('button', { name: 'Borrar todos los datos' }).click()
+    await page.waitForURL('**/#/panel')
+    await page.goto('/#/caja')
+    await expect(page.getByText('Sin movimientos')).toBeVisible()
+    await page.goto('/#/presupuestos')
+    await expect(page.getByText('Aún no hay presupuestos')).toBeVisible()
+  })
+})
