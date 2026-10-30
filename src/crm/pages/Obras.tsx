@@ -9,7 +9,10 @@ import { computeTotals } from '../../types/budget'
 import { obraFinance, obraMaterials, obraReceipts } from '../../utils/crmCalc'
 import { MoneyInput } from '../../components/MoneyInput'
 import { getOverrunPct } from '../../utils/crmStore'
+import { compressPhoto } from '../../utils/photos'
 import { formatMoney, formatLongDate, formatNumber } from '../../utils/money'
+
+const MAX_OBRA_PHOTOS = 12
 
 export function makeObra(preset: Partial<Obra> = {}): Obra {
   return {
@@ -181,7 +184,10 @@ export function ObrasList() {
 // ─── Detalle ──────────────────────────────────────────────────────────────────
 
 export function ObraDetail({ id }: { id: string }) {
-  const { data, navigate, docs, remove, voidMovement } = useCrm()
+  const { data, navigate, docs, remove, voidMovement, save } = useCrm()
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoError, setPhotoError] = useState('')
+  const [viewPhoto, setViewPhoto] = useState<number | null>(null)
   const obra = data.obras.find((o) => o.id === id)
   const [editing, setEditing] = useState(false)
   const [movement, setMovement] = useState<Movement | null>(null)
@@ -363,6 +369,51 @@ export function ObraDetail({ id }: { id: string }) {
         )}
       </div>
 
+      <div className="card p-4 mt-4">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="font-bold text-[15px]">Fotos de la obra ({(obra.photos ?? []).length})</div>
+          <label className={`btn-ghost py-2 px-3 text-[13px] cursor-pointer ${photoBusy || (obra.photos ?? []).length >= MAX_OBRA_PHOTOS ? 'opacity-50 pointer-events-none' : ''}`}>
+            {photoBusy ? 'Subiendo…' : '+ Agregar fotos'}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="sr-only"
+              onChange={async (e) => {
+                const files = Array.from(e.target.files ?? [])
+                e.target.value = ''
+                if (files.length === 0) return
+                const current = obra.photos ?? []
+                const room = MAX_OBRA_PHOTOS - current.length
+                setPhotoBusy(true)
+                setPhotoError('')
+                try {
+                  const added = await Promise.all(files.slice(0, room).map((f) => compressPhoto(f)))
+                  save('obras', { ...obra, photos: [...current, ...added] })
+                  if (files.length > room) setPhotoError(`Máximo ${MAX_OBRA_PHOTOS} fotos por obra: se agregaron ${room}.`)
+                } catch {
+                  setPhotoError('No se pudo cargar una de las imágenes. Probá con JPG o PNG.')
+                } finally {
+                  setPhotoBusy(false)
+                }
+              }}
+            />
+          </label>
+        </div>
+        {photoError && <div className="text-[12px] text-red-700 mb-2">{photoError}</div>}
+        {(obra.photos ?? []).length === 0 ? (
+          <div className="text-[13px] text-romero-gray-3">Todavía no hay fotos. Sacalas desde el celular para dejar registro del avance.</div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {(obra.photos ?? []).map((p, i) => (
+              <button key={i} type="button" onClick={() => setViewPhoto(i)} className="aspect-square overflow-hidden rounded-lg border border-romero-gray-2">
+                <img src={p} alt={`Foto ${i + 1} de la obra`} className="h-full w-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {obra.notes && <div className="card p-4 mt-4 text-[14px] whitespace-pre-wrap">{obra.notes}</div>}
 
       <div className="mt-6 text-right">
@@ -373,6 +424,21 @@ export function ObraDetail({ id }: { id: string }) {
         </button>
       </div>
 
+      {viewPhoto !== null && (obra.photos ?? [])[viewPhoto] && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col" onClick={() => setViewPhoto(null)}>
+          <div className="flex-1 min-h-0 flex items-center justify-center p-3">
+            <img src={(obra.photos ?? [])[viewPhoto]} alt="Foto de la obra" className="max-h-full max-w-full object-contain" />
+          </div>
+          <div className="flex gap-2 p-3" onClick={(e) => e.stopPropagation()}>
+            <button className="btn-ghost flex-1" onClick={() => setViewPhoto(null)}>Cerrar</button>
+            <button className="btn-danger flex-1" onClick={() => {
+              if (!confirm('¿Eliminar esta foto?')) return
+              save('obras', { ...obra, photos: (obra.photos ?? []).filter((_, idx) => idx !== viewPhoto) })
+              setViewPhoto(null)
+            }}>Eliminar foto</button>
+          </div>
+        </div>
+      )}
       {editing && <ObraForm initial={obra} onClose={() => setEditing(false)} />}
       {movement && <MovementForm initial={movement} onClose={() => setMovement(null)} lockType={!!movement.debtId} />}
       {stockOut && <StockOutForm initial={stockOut} onClose={() => setStockOut(null)} />}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { compressPhoto } from '../utils/photos'
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, Movement, MovementMethod, MovementType, newId, today } from '../types/crm'
 import { MoneyInput } from '../components/MoneyInput'
 import { useCrm } from './CrmContext'
@@ -29,6 +30,7 @@ export function MovementForm({ initial, onClose, lockType }: {
 }) {
   const { save, data, voidMovement } = useCrm()
   const [m, setM] = useState<Movement>(initial)
+  const [photoBusy, setPhotoBusy] = useState(false)
   const set = <K extends keyof Movement>(k: K, v: Movement[K]) => setM((p) => ({ ...p, [k]: v }))
   const categories = m.type === 'ingreso' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
   const debt = m.debtId ? data.debts.find((d) => d.id === m.debtId) : undefined
@@ -86,6 +88,32 @@ export function MovementForm({ initial, onClose, lockType }: {
           onChange={(e) => set('description', e.target.value)}
           placeholder={isIncome ? 'Ej: seña obra Castagnino' : 'Ej: 10 rollos de membrana'}
         />
+      </Field>
+
+      <Field label="Foto del ticket (opcional)">
+        {m.photo ? (
+          <div className="flex items-center gap-3">
+            <img src={m.photo} alt="Ticket" className="h-20 w-20 rounded-lg object-cover border border-romero-gray-2" />
+            <button type="button" className="text-[13px] underline text-red-600" onClick={() => set('photo', undefined)}>Quitar foto</button>
+          </div>
+        ) : (
+          <label className="btn-ghost py-2.5 cursor-pointer w-full">
+            {photoBusy ? 'Procesando…' : '📷 Sacar o elegir foto'}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="sr-only"
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (!file) return
+                setPhotoBusy(true)
+                try { set('photo', await compressPhoto(file, 900, 0.65)) } catch { /* ignore */ } finally { setPhotoBusy(false) }
+              }}
+            />
+          </label>
+        )}
       </Field>
 
       <Field label="Forma de pago">

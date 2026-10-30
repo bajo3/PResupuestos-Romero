@@ -35,6 +35,8 @@ export interface Obra extends BaseRecord {
   startDate: string
   endDate: string
   notes: string
+  /** Fotos del avance (JPEG comprimido). */
+  photos?: string[]
 }
 
 export type MovementType = 'ingreso' | 'egreso'
@@ -71,6 +73,8 @@ export interface Movement extends BaseRecord {
   rate?: number
   /** Cheque: fecha en que se cobra (ingreso) o se debita (egreso). Hasta entonces no suma a la caja. */
   chequeDate?: string
+  /** Foto del ticket o comprobante. */
+  photo?: string
   voided?: boolean
   voidedAt?: number
   voidedBy?: string

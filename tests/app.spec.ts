@@ -419,3 +419,33 @@ test.describe('Sobrecosto y cierre de caja', () => {
     await expect(page.getByText('$ 90.000,00').first()).toBeVisible()
   })
 })
+
+// PNG de 1x1 píxel
+const PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64')
+
+test.describe('Fotos', () => {
+  test('se pueden agregar y eliminar fotos de una obra', async ({ page }) => {
+    await seed(page, {
+      'lg.crm.obras.v1': [{ id: 'o1', name: 'Reforma', client: 'Lucas', address: '', amount: 1000000, status: 'en_ejecucion', startDate: today, endDate: '', notes: '', ...base }],
+    })
+    await page.goto('/#/obras/o1')
+    await expect(page.getByText('Fotos de la obra (0)')).toBeVisible()
+    await page.locator('input[type="file"]').setInputFiles({ name: 'avance.png', mimeType: 'image/png', buffer: PIXEL })
+    await expect(page.getByText('Fotos de la obra (1)')).toBeVisible()
+    await page.getByRole('button', { name: /Foto 1 de la obra/ }).click()
+    page.once('dialog', (d) => d.accept())
+    await page.getByRole('button', { name: 'Eliminar foto' }).click()
+    await expect(page.getByText('Fotos de la obra (0)')).toBeVisible()
+  })
+
+  test('un gasto puede llevar la foto del ticket', async ({ page }) => {
+    await page.goto('/#/caja')
+    await page.getByRole('button', { name: '− Salió plata' }).click()
+    await page.keyboard.type('5000')
+    await page.getByRole('dialog').locator('input[type="file"]').setInputFiles({ name: 'ticket.png', mimeType: 'image/png', buffer: PIXEL })
+    await expect(page.getByRole('img', { name: 'Ticket' })).toBeVisible()
+    await page.getByRole('button', { name: 'Guardar' }).click()
+    await page.getByText('Materiales').first().click()
+    await expect(page.getByRole('img', { name: 'Ticket' })).toBeVisible()
+  })
+})
