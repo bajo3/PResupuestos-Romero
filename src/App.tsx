@@ -14,6 +14,7 @@ import { ReceiptForm } from './components/ReceiptForm'
 import { ReceiptPreview } from './components/ReceiptPreview'
 import { CrmProvider, DocActions } from './crm/CrmContext'
 import { useAuth } from './auth/AuthContext'
+import { useAutoRefresh } from './utils/useAutoRefresh'
 import { Shell, NAV } from './crm/Shell'
 import { Dashboard } from './crm/pages/Dashboard'
 import { Caja } from './crm/pages/Caja'
@@ -77,10 +78,11 @@ export default function App() {
   const returnTo = useRef<string | null>(null)
 
   // Sync inicial desde Supabase
-  useEffect(() => {
-    refreshBudgetsFromCloud().then((remote) => { if (remote) setBudgets(remote) })
-    refreshReceiptsFromCloud().then((remote) => { if (remote) setReceipts(remote) })
-  }, [])
+  useAutoRefresh(async () => {
+    const [b, r] = await Promise.all([refreshBudgetsFromCloud(), refreshReceiptsFromCloud()])
+    if (b) setBudgets(b)
+    if (r) setReceipts(r)
+  })
 
   // Persistencia local
   useEffect(() => { saveBudgets(budgets) }, [budgets])

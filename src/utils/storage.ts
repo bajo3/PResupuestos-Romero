@@ -1,5 +1,6 @@
 import { Budget } from '../types/budget'
 import { Receipt } from '../types/receipt'
+import { mergeWithRemote } from './syncMerge'
 import {
   syncBudgetToSupabase,
   syncClientToSupabase,
@@ -99,13 +100,23 @@ export function loadBudgets(): Budget[] {
   return []
 }
 
+/** Lo último que se subió de cada presupuesto/recibo: solo se sube lo que cambió desde entonces. */
+const pushedBudgets = new Map<string, number>()
+const pushedReceipts = new Map<string, number>()
+let budgetsSynced = false
+let receiptsSynced = false
+
 export function saveBudgets(list: Budget[]): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(list))
   } catch { /* ignore */ }
-  list.forEach((b) =>
-    syncBudgetToSupabase(b, b.id, b.archived ?? false).catch(() => { /* ignore */ })
-  )
+  if (!budgetsSynced) return // antes de comparar con la nube no se sube nada
+  list.forEach((b) => {
+    const t = b.updatedAt ?? 0
+    if ((pushedBudgets.get(b.id) ?? -1) >= t) return
+    pushedBudgets.set(b.id, t)
+    syncBudgetToSupabase(b, b.id, b.archived ?? false, t).catch(() => pushedBudgets.delete(b.id))
+  })
 }
 
 /** Archiva un presupuesto: lo marca como archived en localStorage y Supabase */
@@ -124,14 +135,21 @@ export function archiveBudget(id: string, budgets: Budget[]): Budget[] {
   return active
 }
 
+/** Mezcla con la nube (respetando lo archivado). Devuelve la lista nueva o null si no hubo conexión. */
 export async function refreshBudgetsFromCloud(): Promise<Budget[] | null> {
   try {
-    const remote = await fetchBudgetsFromSupabase()
-    if (remote.length > 0) {
-      const budgets = remote as Budget[]
-      localStorage.setItem(KEY, JSON.stringify(budgets))
-      return budgets
-    }
+    const rows = await fetchBudgetsFromSupabase()
+    if (!rows) return null
+    const { list, toPush, known } = mergeWithRemote<Budget>(loadBudgets(), rows)
+    known.forEach((t, id) => pushedBudgets.set(id, t))
+    budgetsSynced = true
+    localStorage.setItem(KEY, JSON.stringify(list))
+    toPush.forEach((b) => {
+      const t = b.updatedAt ?? 0
+      pushedBudgets.set(b.id, t)
+      syncBudgetToSupabase(b, b.id, false, t).catch(() => pushedBudgets.delete(b.id))
+    })
+    return list
   } catch { /* ignore */ }
   return null
 }
@@ -171,9 +189,13 @@ export function saveReceipts(list: Receipt[]): void {
   try {
     localStorage.setItem(RECEIPTS_KEY, JSON.stringify(list))
   } catch { /* ignore */ }
-  list.forEach((r) =>
-    syncReceiptToSupabase(r, r.id, r.archived ?? false).catch(() => { /* ignore */ })
-  )
+  if (!receiptsSynced) return
+  list.forEach((r) => {
+    const t = r.updatedAt ?? 0
+    if ((pushedReceipts.get(r.id) ?? -1) >= t) return
+    pushedReceipts.set(r.id, t)
+    syncReceiptToSupabase(r, r.id, r.archived ?? false, t).catch(() => pushedReceipts.delete(r.id))
+  })
 }
 
 export function archiveReceipt(id: string, receipts: Receipt[]): Receipt[] {
@@ -191,12 +213,18 @@ export function archiveReceipt(id: string, receipts: Receipt[]): Receipt[] {
 
 export async function refreshReceiptsFromCloud(): Promise<Receipt[] | null> {
   try {
-    const remote = await fetchReceiptsFromSupabase()
-    if (remote.length > 0) {
-      const receipts = remote as Receipt[]
-      localStorage.setItem(RECEIPTS_KEY, JSON.stringify(receipts))
-      return receipts
-    }
+    const rows = await fetchReceiptsFromSupabase()
+    if (!rows) return null
+    const { list, toPush, known } = mergeWithRemote<Receipt>(loadReceipts(), rows)
+    known.forEach((t, id) => pushedReceipts.set(id, t))
+    receiptsSynced = true
+    localStorage.setItem(RECEIPTS_KEY, JSON.stringify(list))
+    toPush.forEach((r) => {
+      const t = r.updatedAt ?? 0
+      pushedReceipts.set(r.id, t)
+      syncReceiptToSupabase(r, r.id, false, t).catch(() => pushedReceipts.delete(r.id))
+    })
+    return list
   } catch { /* ignore */ }
   return null
 }

@@ -1,5 +1,6 @@
 import { BaseRecord, CRM_KINDS, CrmCollections, CrmKind } from '../types/crm'
 import { fetchCrmRecordsFromSupabase, syncCrmRecordToSupabase } from './supabase'
+import { mergeWithRemote } from './syncMerge'
 
 const keyFor = (kind: CrmKind) => `lg.crm.${kind}.v1`
 const USER_KEY = 'lg.user.v1'
@@ -90,27 +91,20 @@ export function stamp<T extends BaseRecord>(record: T, isNew: boolean): T {
 // ─── Nube ─────────────────────────────────────────────────────────────────────
 
 /**
- * Trae los registros de Supabase y los mezcla con los locales: por id gana el
- * de updatedAt más nuevo. Lo que solo existe local se vuelve a subir.
- * Devuelve null si Supabase no está configurado o falló.
+ * Mezcla con Supabase respetando lo archivado: gana lo más reciente; una copia local vieja
+ * de algo archivado en la nube se descarta (antes se resucitaba). Lo nuevo creado sin
+ * conexión se sube. Devuelve null si no hay conexión.
  */
-export async function refreshCrmFromCloud(local: CrmCollections): Promise<CrmCollections | null> {
+export async function refreshCrmFromCloud(getLocal: () => CrmCollections): Promise<CrmCollections | null> {
   const rows = await fetchCrmRecordsFromSupabase().catch(() => null)
   if (!rows) return null
+  const local = getLocal() // se lee después de la consulta: así no pisa lo que se cargó mientras tanto
 
   const merged = { ...local }
   for (const kind of CRM_KINDS) {
-    const remote = rows.filter((r) => r.kind === kind).map((r) => r.data as BaseRecord)
-    const byId = new Map<string, BaseRecord>()
-    for (const r of remote) byId.set(r.id, r)
-    for (const l of local[kind] as BaseRecord[]) {
-      const r = byId.get(l.id)
-      if (!r || (l.updatedAt ?? 0) > (r.updatedAt ?? 0)) {
-        byId.set(l.id, l)
-        pushRecord(kind, l)
-      }
-    }
-    const list = [...byId.values()].filter((r) => !r.archived)
+    const remote = rows.filter((r) => r.kind === kind)
+    const { list, toPush } = mergeWithRemote(local[kind] as BaseRecord[], remote)
+    toPush.forEach((rec) => pushRecord(kind, rec))
     writeKind(kind, list)
     ;(merged as Record<CrmKind, BaseRecord[]>)[kind] = list
   }

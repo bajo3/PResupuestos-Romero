@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test'
+import { mergeWithRemote } from '../src/utils/syncMerge'
 
 // Datos de prueba: se cargan en localStorage antes de abrir la app (sin Supabase).
 async function seed(page: Page, data: Record<string, unknown>) {
@@ -461,5 +462,41 @@ test.describe('Sin conexión', () => {
     await page.reload()
     await expect(page.getByRole('heading', { name: 'Panel general' })).toBeVisible()
     await expect(page.getByText('Sin conexión')).toBeVisible()
+  })
+})
+
+// ─── Mezcla con la nube: lo archivado no se resucita ──────────────────────────
+
+test.describe('Mezcla con la nube', () => {
+  type R = { id: string; updatedAt: number; name?: string }
+  const row = (id: string, updated_at: number, archived: boolean, name = 'nube') => ({ id, archived, updated_at, data: { id, updatedAt: updated_at, name } })
+
+  test('una copia local vieja de algo archivado en la nube se descarta', () => {
+    const local: R[] = [{ id: 'd1', updatedAt: 100, name: 'vieja' }]
+    const { list, toPush } = mergeWithRemote<R>(local, [row('d1', 500, true)])
+    expect(list).toEqual([])
+    expect(toPush).toEqual([])
+  })
+
+  test('si se editó después de archivarse, gana lo local', () => {
+    const local: R[] = [{ id: 'd1', updatedAt: 900, name: 'editada' }]
+    const { list, toPush } = mergeWithRemote<R>(local, [row('d1', 500, true)])
+    expect(list.map((x) => x.name)).toEqual(['editada'])
+    expect(toPush).toHaveLength(1)
+  })
+
+  test('lo nuevo creado sin conexión se conserva y se sube', () => {
+    const { list, toPush } = mergeWithRemote<R>([{ id: 'n1', updatedAt: 10, name: 'nuevo' }], [row('x', 5, false)])
+    expect(list.map((x) => x.id).sort()).toEqual(['n1', 'x'])
+    expect(toPush.map((x) => x.id)).toEqual(['n1'])
+  })
+
+  test('gana lo más reciente entre local y nube', () => {
+    const newerRemote = mergeWithRemote<R>([{ id: 'a', updatedAt: 100, name: 'local' }], [row('a', 200, false, 'nube')])
+    expect(newerRemote.list[0].name).toBe('nube')
+    expect(newerRemote.toPush).toEqual([])
+    const newerLocal = mergeWithRemote<R>([{ id: 'a', updatedAt: 300, name: 'local' }], [row('a', 200, false, 'nube')])
+    expect(newerLocal.list[0].name).toBe('local')
+    expect(newerLocal.toPush).toHaveLength(1)
   })
 })

@@ -16,9 +16,17 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 export const supabase: SupabaseClient | null =
   url && key ? createClient(url, key) : null
 
-export async function syncBudgetToSupabase(data: object, id: string, archived = false): Promise<void> {
+export interface CloudRow {
+  id: string
+  archived: boolean
+  updated_at: number
+  data: unknown
+}
+
+export async function syncBudgetToSupabase(data: object, id: string, archived = false, updatedAt = Date.now()): Promise<void> {
   if (!supabase) return
-  await supabase.from('budgets').upsert({ id, data, updated_at: Date.now(), archived })
+  const { error } = await supabase.from('budgets').upsert({ id, data, updated_at: updatedAt, archived })
+  if (error) throw error
 }
 
 export async function syncClientToSupabase(client: ClientRecord): Promise<void> {
@@ -35,14 +43,12 @@ export async function fetchClientsFromSupabase(): Promise<ClientRecord[]> {
   return (data as ClientRecord[]) ?? []
 }
 
-export async function fetchBudgetsFromSupabase(): Promise<object[]> {
-  if (!supabase) return []
-  const { data } = await supabase
-    .from('budgets')
-    .select('data')
-    .eq('archived', false)
-    .order('updated_at', { ascending: false })
-  return data?.map((r: { data: object }) => r.data) ?? []
+/** Todas las filas (activas y archivadas). Null si no hay conexión o falló. */
+export async function fetchBudgetsFromSupabase(): Promise<CloudRow[] | null> {
+  if (!supabase) return null
+  const { data, error } = await supabase.from('budgets').select('id, data, archived, updated_at')
+  if (error) return null
+  return (data as CloudRow[]) ?? []
 }
 
 /** Incrementa el contador en Supabase y devuelve el número formateado "001", "002"... */
@@ -55,19 +61,17 @@ export async function nextBudgetNumberFromSupabase(): Promise<string | null> {
 
 // ─── Recibos ──────────────────────────────────────────────────────────────────
 
-export async function syncReceiptToSupabase(data: object, id: string, archived = false): Promise<void> {
+export async function syncReceiptToSupabase(data: object, id: string, archived = false, updatedAt = Date.now()): Promise<void> {
   if (!supabase) return
-  await supabase.from('receipts').upsert({ id, data, updated_at: Date.now(), archived })
+  const { error } = await supabase.from('receipts').upsert({ id, data, updated_at: updatedAt, archived })
+  if (error) throw error
 }
 
-export async function fetchReceiptsFromSupabase(): Promise<object[]> {
-  if (!supabase) return []
-  const { data } = await supabase
-    .from('receipts')
-    .select('data')
-    .eq('archived', false)
-    .order('updated_at', { ascending: false })
-  return data?.map((r: { data: object }) => r.data) ?? []
+export async function fetchReceiptsFromSupabase(): Promise<CloudRow[] | null> {
+  if (!supabase) return null
+  const { data, error } = await supabase.from('receipts').select('id, data, archived, updated_at')
+  if (error) return null
+  return (data as CloudRow[]) ?? []
 }
 
 export async function nextReceiptNumberFromSupabase(): Promise<string | null> {
@@ -93,13 +97,9 @@ export async function syncCrmRecordToSupabase(
   })
 }
 
-export async function fetchCrmRecordsFromSupabase(): Promise<{ kind: string; data: object }[] | null> {
+export async function fetchCrmRecordsFromSupabase(): Promise<(CloudRow & { kind: string })[] | null> {
   if (!supabase) return null
-  const { data, error } = await supabase
-    .from('crm_records')
-    .select('kind, data')
-    .eq('archived', false)
-    .order('updated_at', { ascending: false })
+  const { data, error } = await supabase.from('crm_records').select('id, kind, data, archived, updated_at')
   if (error) return null
-  return (data as { kind: string; data: object }[]) ?? []
+  return (data as (CloudRow & { kind: string })[]) ?? []
 }

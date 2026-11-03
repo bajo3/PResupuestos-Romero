@@ -1,8 +1,9 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 import { Budget } from '../types/budget'
 import { Receipt } from '../types/receipt'
 import { BaseRecord, CrmCollections, CrmKind, Movement, Obra } from '../types/crm'
 import { CrmData } from '../utils/crmCalc'
+import { useAutoRefresh } from '../utils/useAutoRefresh'
 import { loadCrm, pushRecord, refreshCrmFromCloud, stamp, writeKind, getCurrentUser } from '../utils/crmStore'
 import { loadClients, refreshClientsFromCloud, upsertClient } from '../utils/storage'
 import type { ClientRecord } from '../utils/supabase'
@@ -42,10 +43,11 @@ export function CrmProvider({ budgets, receipts, navigate, docs, children }: Pro
   const [crm, setCrm] = useState<CrmCollections>(() => loadCrm())
   const [clients, setClients] = useState<ClientRecord[]>(() => loadClients())
 
-  useEffect(() => {
-    refreshCrmFromCloud(loadCrm()).then((merged) => { if (merged) setCrm(merged) })
-    refreshClientsFromCloud().then(setClients)
-  }, [])
+  useAutoRefresh(async () => {
+    const merged = await refreshCrmFromCloud(loadCrm)
+    if (merged) setCrm(merged)
+    setClients(await refreshClientsFromCloud())
+  })
 
   const save = useCallback(<K extends CrmKind>(kind: K, record: CrmCollections[K][number]) => {
     setCrm((prev) => {
