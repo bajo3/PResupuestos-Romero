@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { BrandLogo } from '../components/BrandLogo'
 import { useCrm } from './CrmContext'
 import { useAuth } from '../auth/AuthContext'
+import { updateNow, useAppUpdate } from '../utils/useAppUpdate'
 import { MovementForm, makeMovement } from './MovementForm'
 import { ObraForm, makeObra } from './pages/Obras'
 import { Movement, Obra } from '../types/crm'
@@ -78,6 +79,7 @@ export function Shell({ section, onGo, children }: { section: string; onGo: (id:
   const canMoney = can('caja')
   const [sheet, setSheet] = useState<Sheet>(null)
   const online = useOnline()
+  const outdated = useAppUpdate()
   const [movement, setMovement] = useState<Movement | null>(null)
   const [obra, setObra] = useState<Obra | null>(null)
 
@@ -103,6 +105,12 @@ export function Shell({ section, onGo, children }: { section: string; onGo: (id:
         <NavList section={section} onGo={go} allow={can} />
       </aside>
 
+      {outdated && (
+        <div className="sticky top-0 z-30 bg-sky-100 border-b border-sky-200 px-4 py-2 text-[13px] font-semibold text-sky-900 flex items-center justify-center gap-3">
+          <span>Hay una versión nueva de la app.</span>
+          <button className="rounded-lg bg-sky-700 text-white px-3 py-1 text-[12px] font-bold" onClick={() => void updateNow()}>Actualizar</button>
+        </div>
+      )}
       {!online && (
         <div className="sticky top-0 z-30 bg-amber-100 border-b border-amber-200 px-4 py-2 text-[12px] font-semibold text-amber-900 text-center">
           Sin conexión: lo que cargues se guarda en este dispositivo y se sube solo cuando vuelva internet.

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../auth/AuthContext'
+import { APP_VERSION, updateNow } from '../../utils/useAppUpdate'
 import { listProfiles, Profile, Role, ROLE_LABEL, updateProfile } from '../../utils/auth'
 import { Field, Page } from '../ui'
 import { getCurrentUser, setCurrentUser, getOverrunPct, setOverrunPct } from '../../utils/crmStore'
@@ -120,6 +121,13 @@ export function Configuracion() {
         <p className="text-[12px] text-romero-gray-3">
           Para el CRM hay que correr una vez el script <code>supabase-crm.sql</code> en el SQL Editor de Supabase.
         </p>
+      </div>
+
+      <div className="card p-4 mt-4 space-y-2">
+        <div className="font-bold text-[15px]">Versión de la app</div>
+        <p className="text-[14px]">Versión <b>{APP_VERSION}</b></p>
+        <p className="text-[12px] text-romero-gray-3">Si este dispositivo muestra algo viejo, tocá el botón para traer la última versión.</p>
+        <button className="btn-ghost w-full" onClick={() => void updateNow()}>Buscar actualización</button>
       </div>
 
       {can('reset') && <div className="card p-4 mt-4 space-y-2 border-red-200">

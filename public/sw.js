@@ -1,6 +1,6 @@
 // Modo sin conexión: guarda la aplicación en el dispositivo para que abra sin internet.
 // Los datos viven en el dispositivo y se suben a Supabase cuando vuelve la conexión.
-const CACHE = 'crm-lg-v1'
+const CACHE = 'crm-lg-v2'
 const SHELL = ['/', '/manifest.webmanifest', '/logo-lucas-gallastagui.png']
 
 self.addEventListener('install', (event) => {
@@ -28,6 +28,7 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return
   const url = new URL(req.url)
   if (url.origin !== self.location.origin) return // Supabase, dólar, etc. van siempre a la red
+  if (url.pathname === '/version.json') return // siempre a la red
 
   // La pantalla principal: primero la red (para tener siempre la versión nueva), si no hay red, la guardada
   if (req.mode === 'navigate') {

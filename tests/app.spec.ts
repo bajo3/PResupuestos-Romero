@@ -500,3 +500,18 @@ test.describe('Mezcla con la nube', () => {
     expect(newerLocal.toPush).toHaveLength(1)
   })
 })
+
+test.describe('Versión de la app', () => {
+  test('avisa cuando se publica una versión nueva', async ({ page }) => {
+    await page.route('**/version.json*', (r) => r.fulfill({ json: { version: 'version-nueva-123' } }))
+    await page.goto('/#/panel')
+    await expect(page.getByText('Hay una versión nueva de la app.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Actualizar' })).toBeVisible()
+  })
+
+  test('no avisa si la versión es la misma y se ve en Configuración', async ({ page }) => {
+    await page.goto('/#/config')
+    await expect(page.getByText('Versión de la app')).toBeVisible()
+    await expect(page.getByText('Hay una versión nueva de la app.')).toHaveCount(0)
+  })
+})
