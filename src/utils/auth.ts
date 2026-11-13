@@ -27,7 +27,7 @@ export function canAccess(role: Role, feature: string): boolean {
   if (role === 'admin') return true
   if (feature === 'reset' || feature === 'users') return false
   if (role === 'encargado') return feature !== 'reportes'
-  return ['obras', 'stock', 'garantias', 'clientes', 'config'].includes(feature)
+  return ['obras', 'stock', 'garantias', 'notas', 'clientes', 'config'].includes(feature)
 }
 
 const ERRORS: Record<string, string> = {

@@ -120,7 +120,17 @@ export interface Warranty extends BaseRecord {
   exclusions: string
 }
 
-export type CrmKind = 'obras' | 'movements' | 'debts' | 'stock_items' | 'stock_moves' | 'warranties'
+/** Nota con membrete (avisos a clientes: lluvia, visitas, recordatorios…). */
+export interface Nota extends BaseRecord {
+  number: string
+  date: string
+  /** Destinatario (opcional). */
+  to: string
+  subject: string
+  body: string
+}
+
+export type CrmKind = 'obras' | 'movements' | 'debts' | 'stock_items' | 'stock_moves' | 'warranties' | 'notes'
 
 export interface CrmCollections {
   obras: Obra[]
@@ -129,9 +139,10 @@ export interface CrmCollections {
   stock_items: StockItem[]
   stock_moves: StockMove[]
   warranties: Warranty[]
+  notes: Nota[]
 }
 
-export const CRM_KINDS: CrmKind[] = ['obras', 'movements', 'debts', 'stock_items', 'stock_moves', 'warranties']
+export const CRM_KINDS: CrmKind[] = ['obras', 'movements', 'debts', 'stock_items', 'stock_moves', 'warranties', 'notes']
 
 /** Fecha local yyyy-mm-dd (toISOString usa UTC y a la noche da el día siguiente). */
 export function toLocalIso(d: Date): string {

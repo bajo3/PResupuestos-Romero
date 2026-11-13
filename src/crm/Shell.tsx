@@ -17,6 +17,7 @@ export const NAV: { id: string; label: string }[] = [
   { id: 'stock', label: 'Stock' },
   { id: 'deudas', label: 'Deudas' },
   { id: 'garantias', label: 'Garantías' },
+  { id: 'notas', label: 'Notas' },
   { id: 'reportes', label: 'Reportes' },
   { id: 'config', label: 'Configuración' },
 ]
@@ -182,7 +183,7 @@ export function Shell({ section, onGo, children }: { section: string; onGo: (id:
             role="dialog"
             aria-label="Más secciones"
           >
-            <NavList section={section} onGo={go} allow={can} ids={['presupuestos', 'recibos', 'stock', 'deudas', 'garantias', 'reportes', 'config']} />
+            <NavList section={section} onGo={go} allow={can} ids={['presupuestos', 'recibos', 'notas', 'stock', 'deudas', 'garantias', 'reportes', 'config']} />
           </div>
         </div>
       )}

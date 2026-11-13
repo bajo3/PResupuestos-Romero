@@ -5,10 +5,10 @@ interface Props {
   onBack: () => void
   onEdit: () => void
   clientName?: string
-  docType?: 'presupuesto' | 'recibo' | 'garantia'
+  docType?: 'presupuesto' | 'recibo' | 'garantia' | 'nota'
 }
 
-const DOC_LABEL: Record<string, string> = { presupuesto: 'presupuesto', recibo: 'recibo', garantia: 'garantía' }
+const DOC_LABEL: Record<string, string> = { presupuesto: 'presupuesto', recibo: 'recibo', garantia: 'garantía', nota: 'aviso' }
 
 function safeName(clientName: string): string {
   return (clientName || 'cliente').replace(/[^a-zA-Z0-9\s\-áéíóúüñÁÉÍÓÚÜÑ]/g, '').trim() || 'lucas-gallastagui'

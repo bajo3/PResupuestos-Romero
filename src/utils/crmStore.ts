@@ -67,6 +67,7 @@ export function loadCrm(): CrmCollections {
     stock_items: readKind('stock_items'),
     stock_moves: readKind('stock_moves'),
     warranties: readKind('warranties'),
+    notes: readKind('notes'),
   }
 }
 

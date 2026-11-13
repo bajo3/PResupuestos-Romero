@@ -23,6 +23,7 @@ import { Clientes } from './crm/pages/Clientes'
 import { Stock } from './crm/pages/Stock'
 import { Deudas } from './crm/pages/Deudas'
 import { GarantiasList, GarantiaView } from './crm/pages/Garantias'
+import { NotasList, NotaView } from './crm/pages/Notas'
 import { Reportes } from './crm/pages/Reportes'
 import { Configuracion } from './crm/pages/Configuracion'
 
@@ -257,6 +258,9 @@ export default function App() {
         </main>
       </>
     )
+  } else if (known === 'notas' && param) {
+    bare = true
+    content = <NotaView id={param} />
   } else if (known === 'garantias' && param) {
     bare = true
     content = <GarantiaView id={param} />
@@ -289,6 +293,7 @@ export default function App() {
       stock: <Stock />,
       deudas: <Deudas />,
       garantias: <GarantiasList />,
+      notas: <NotasList />,
       reportes: <Reportes />,
       config: <Configuracion />,
     }[known] ?? <Dashboard />

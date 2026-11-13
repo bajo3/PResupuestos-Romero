@@ -14,7 +14,7 @@ const GRAY = '#9CA3AF'
 
 // ─── Escala: el documento se maqueta siempre a tamaño A4 y se reduce en pantallas chicas ──
 
-function Scaler({ children }: { children: ReactNode }) {
+export function Scaler({ children }: { children: ReactNode }) {
   const wrap = useRef<HTMLDivElement>(null)
   const inner = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)

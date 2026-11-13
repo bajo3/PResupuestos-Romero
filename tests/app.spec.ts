@@ -515,3 +515,39 @@ test.describe('Versión de la app', () => {
     await expect(page.getByText('Hay una versión nueva de la app.')).toHaveCount(0)
   })
 })
+
+test.describe('Notas con membrete', () => {
+  test('se crea una nota con un modelo, se ve en A4 y el PDF tiene 1 hoja', async ({ page, browserName }) => {
+    await page.goto('/#/notas')
+    await page.getByRole('button', { name: '+ Nueva nota' }).click()
+    await page.getByRole('button', { name: 'Suspensión por lluvia' }).click()
+    await page.getByPlaceholder('Cliente o destinatario').fill('Consorcio Paz')
+    await page.getByRole('button', { name: 'Ver nota' }).first().click()
+    await expect(page.locator('.budget-page')).toHaveCount(1)
+    await expect(page.getByText('Reprogramación de trabajos por condiciones climáticas')).toBeVisible()
+    await expect(page.getByText('Consorcio Paz')).toBeVisible()
+    await expect(page.getByText('no entra en una hoja')).toHaveCount(0)
+    if (browserName === 'chromium') {
+      await page.waitForTimeout(400)
+      const pdf = await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true })
+      expect((pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) ?? []).length).toBe(1)
+    }
+    await page.getByRole('button', { name: /Volver/ }).click()
+    await expect(page.getByText('Reprogramación de trabajos por condiciones climáticas')).toBeVisible()
+  })
+
+  test('texto libre escrito a mano', async ({ page }) => {
+    await page.goto('/#/notas')
+    await page.getByRole('button', { name: '+ Nueva nota' }).click()
+    await page.getByPlaceholder(/Mañana no podremos ir/).fill('Mañana no podremos ir porque está pronosticada lluvia.')
+    await page.getByRole('button', { name: 'Ver nota' }).first().click()
+    await expect(page.getByText('Mañana no podremos ir porque está pronosticada lluvia.')).toBeVisible()
+  })
+
+  test('una nota sin texto que se cancela no queda guardada', async ({ page }) => {
+    await page.goto('/#/notas')
+    await page.getByRole('button', { name: '+ Nueva nota' }).click()
+    await page.getByRole('button', { name: '← Volver' }).click()
+    await expect(page.getByText('Todavía no hay notas')).toBeVisible()
+  })
+})
