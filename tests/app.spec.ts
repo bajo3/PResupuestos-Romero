@@ -98,6 +98,35 @@ test.describe('Presupuestos', () => {
     expect((pdf.match(/\/Type\s*\/Page[^s]/g) ?? []).length).toBe(2)
   })
 
+  test('el PDF sale completo aunque la pantalla esté desplazada (no se recorta arriba)', async ({ page }) => {
+    const long = { ...budget, stages: ['Preparación del soporte con limpieza profunda de la superficie y eliminación de material flojo.', 'Tratamiento y sellado de fisuras y grietas con materiales compatibles.', 'Refuerzo de encuentros, desagües y puntos críticos de la terraza.', 'Aplicación de primer compatible con el sistema para favorecer la adherencia.', 'Aplicación de capas sucesivas hasta formar una membrana continua y flexible.', 'Terminación y protección con verificación de continuidad y cobertura.'] }
+    await seed(page, { 'romero.budgets.v1': [long] })
+    await page.goto('/#/presupuestos')
+    await page.getByText('👁 Ver').click()
+    await page.evaluate(() => { document.body.style.minHeight = '4000px'; window.scrollTo(0, 900) })
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Descargar PDF' }).click(),
+    ])
+    const fs = await import('node:fs')
+    const buf = fs.readFileSync((await download.path())!)
+    const start = buf.indexOf(Buffer.from([0xff, 0xd8, 0xff]))
+    const end = buf.indexOf(Buffer.from([0xff, 0xd9]), start + 2000)
+    const jpg = buf.subarray(start, end + 2).toString('base64')
+    if (process.env.SAVE_PDF_IMG) fs.writeFileSync(process.env.SAVE_PDF_IMG, buf.subarray(start, end + 2))
+    // el encabezado negro tiene que estar en el borde superior de la hoja 1
+    const dark = await page.evaluate(async (b64) => {
+      const img = new Image()
+      img.src = 'data:image/jpeg;base64,' + b64
+      await img.decode()
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height
+      const g = c.getContext('2d')!; g.drawImage(img, 0, 0)
+      const px = g.getImageData(img.width - 20, 15, 1, 1).data
+      return px[0] + px[1] + px[2]
+    }, jpg)
+    expect(dark).toBeLessThan(120)
+  })
+
   test('en el celular el presupuesto se lee con letra normal y sin desbordes', async ({ page, isMobile }) => {
     test.skip(!isMobile)
     await seed(page, { 'romero.budgets.v1': [budget] })

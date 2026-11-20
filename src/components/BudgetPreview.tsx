@@ -137,10 +137,10 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
                   <BrandLogo variant="compact" />
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <h1 className="font-display" style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.01em', color: 'white', margin: 0 }}>
+                  <h1 className="font-display" style={{ fontSize: 38, fontWeight: 700, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'white', margin: 0 }}>
                     PRESUPUESTO
                   </h1>
-                  <div style={{ marginTop: 8, display: 'inline-block', background: YELLOW, color: INK, borderRadius: 8, padding: '5px 12px', fontSize: 13, fontWeight: 800, letterSpacing: '0.08em' }}>
+                  <div style={{ marginTop: 12, display: 'inline-block', background: YELLOW, color: INK, borderRadius: 8, padding: '5px 12px', fontSize: 13, fontWeight: 800, letterSpacing: '0.08em' }}>
                     N° {budget.number || '—'}
                   </div>
                 </div>
@@ -194,8 +194,8 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
                 <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12.5, lineHeight: 1.4 }}>
                   {budget.stages.map((s, i) => (
                     <li key={i} style={{ display: 'flex', gap: 8 }}>
-                      <span style={{ flexShrink: 0, width: 22, textAlign: 'center', padding: '3px 0', borderRadius: 5, background: INK, color: 'white', fontSize: 10, fontWeight: 700, lineHeight: 1 }}>
-                        {String(i + 1).padStart(2, '0')}
+                      <span style={{ flexShrink: 0, width: 22, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, background: INK, color: 'white', fontSize: 10, fontWeight: 700, lineHeight: '14px' }}>
+                        <span style={{ position: 'relative', top: -3 }}>{String(i + 1).padStart(2, '0')}</span>
                       </span>
                       <span style={{ paddingTop: 1 }}>{s}</span>
                     </li>
@@ -257,7 +257,7 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
                 )}
 
                 {/* Total */}
-                <div style={{ position: 'relative', overflow: 'hidden', background: INK, color: 'white', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ position: 'relative', overflow: 'hidden', background: INK, color: 'white', padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <div aria-hidden style={{ position: 'absolute', right: -50, top: -70, width: 190, height: 190, borderRadius: 999, background: 'rgba(255,214,10,0.15)' }} />
                   <div style={{ position: 'relative' }}>
                     <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: YELLOW }}>
@@ -267,7 +267,7 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
                       {pending ? 'Importe a confirmar antes del inicio de obra' : budget.applyVat ? `Incluye IVA ${budget.vatPct}%` : 'No incluye IVA'}
                     </div>
                   </div>
-                  <div className="font-display" style={{ position: 'relative', fontSize: 34, fontWeight: 700, lineHeight: 1, color: pending ? YELLOW : 'white' }}>
+                  <div className="font-display" style={{ position: 'relative', fontSize: 34, fontWeight: 700, lineHeight: 1.2, color: pending ? YELLOW : 'white' }}>
                     {pending ? 'A confirmar' : formatMoney(t.total)}
                   </div>
                 </div>
@@ -277,7 +277,7 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
                     <div style={{ padding: '10px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Label>Anticipo</Label>
-                        <span style={{ padding: '1px 8px', fontSize: 10.5, fontWeight: 700, background: INK, color: 'white', borderRadius: 999 }}>{budget.advancePct}%</span>
+                        <span style={{ padding: '0 8px', height: 18, display: 'inline-flex', alignItems: 'center', fontSize: 10.5, lineHeight: '14px', fontWeight: 700, background: INK, color: 'white', borderRadius: 999 }}><span style={{ position: 'relative', top: -3 }}>{budget.advancePct}%</span></span>
                       </div>
                       <div className="font-display" style={{ fontSize: 19, fontWeight: 700, marginTop: 2 }}>{formatMoney(t.advance)}</div>
                       <div style={{ fontSize: 10, color: GRAY }}>Con fecha de inicio a coordinar.</div>
@@ -285,7 +285,7 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
                     <div style={{ padding: '10px 16px', background: 'rgba(255,214,10,0.15)', borderLeft: '1px solid #E4E4E7' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Label color="rgba(11,11,11,0.6)">Finalización</Label>
-                        <span style={{ padding: '1px 8px', fontSize: 10.5, fontWeight: 700, background: YELLOW, color: INK, borderRadius: 999 }}>{budget.finalPct}%</span>
+                        <span style={{ padding: '0 8px', height: 18, display: 'inline-flex', alignItems: 'center', fontSize: 10.5, lineHeight: '14px', fontWeight: 700, background: YELLOW, color: INK, borderRadius: 999 }}><span style={{ position: 'relative', top: -3 }}>{budget.finalPct}%</span></span>
                       </div>
                       <div className="font-display" style={{ fontSize: 19, fontWeight: 700, marginTop: 2 }}>{formatMoney(t.final)}</div>
                       <div style={{ fontSize: 10, color: 'rgba(11,11,11,0.55)' }}>Contra entrega de obra terminada.</div>

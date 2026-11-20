@@ -25,6 +25,11 @@ async function buildPdf(clientName: string, docType: string): Promise<{ pdf: imp
   const prevTransform = scaled?.style.transform ?? ''
   if (scaled) scaled.style.transform = 'none'
 
+  // html2canvas captura mal (recortado) si la pantalla está desplazada: se vuelve arriba y se restaura al terminar
+  const prevScroll = { x: window.scrollX, y: window.scrollY }
+  window.scrollTo(0, 0)
+  const cap = { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, scrollX: 0, scrollY: 0 } as const
+
   try {
     const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
       import('html2canvas'),
@@ -43,7 +48,7 @@ async function buildPdf(clientName: string, docType: string): Promise<{ pdf: imp
     // Hojas de tamaño fijo (presupuesto): una por página, ajustadas a la A4 completa
     if (blocks.length > 0 && blocks.every((b) => b.hasAttribute('data-page'))) {
       for (let i = 0; i < blocks.length; i++) {
-        const canvas = await html2canvas(blocks[i], { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false })
+        const canvas = await html2canvas(blocks[i], cap)
         if (i > 0) pdf.addPage()
         pdf.addImage(canvas, 'JPEG', 0, 0, pageW, pageH)
       }
@@ -51,12 +56,7 @@ async function buildPdf(clientName: string, docType: string): Promise<{ pdf: imp
     }
 
     for (const block of blocks) {
-      const canvas = await html2canvas(block, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      })
+      const canvas = await html2canvas(block, cap)
       const blockH = (canvas.height * pageW) / canvas.width
 
       // Bloque más alto que una página: cortarlo manualmente
@@ -89,6 +89,7 @@ async function buildPdf(clientName: string, docType: string): Promise<{ pdf: imp
     return { pdf, filename }
   } finally {
     if (scaled) scaled.style.transform = prevTransform
+    window.scrollTo(prevScroll.x, prevScroll.y)
   }
 }
 
