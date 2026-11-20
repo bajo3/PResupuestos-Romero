@@ -142,11 +142,11 @@ function ReceiptSheet({ receipt: r }: Props) {
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '16px',
-              padding: '20px 24px',
+              padding: '24px 24px',
             }}
           >
             <div
-              style={{ fontSize: '34px', color: '#F5C800', lineHeight: 1, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}
+              style={{ fontSize: '34px', color: '#F5C800', lineHeight: 1.25, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}
             >
               {formatMoney(r.amount)}
             </div>
@@ -162,10 +162,13 @@ function ReceiptSheet({ receipt: r }: Props) {
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 whiteSpace: 'nowrap',
-                lineHeight: 1.4,
+                height: '26px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                lineHeight: '16px',
               }}
             >
-              {PAYMENT_LABELS[r.paymentMethod] ?? r.paymentMethod}
+              <span style={{ position: 'relative', top: '-3px' }}>{PAYMENT_LABELS[r.paymentMethod] ?? r.paymentMethod}</span>
             </div>
           </div>
         </div>

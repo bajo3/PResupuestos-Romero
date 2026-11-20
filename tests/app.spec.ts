@@ -82,6 +82,9 @@ test.describe('Presupuestos', () => {
     await page.goto('/#/presupuestos')
     await page.getByText('👁 Ver').click()
     await expect(page.getByText('no entra en 2 hojas')).toBeVisible()
+    // aunque no entre, el encabezado no se achica en silencio (se veía cortado en el PDF)
+    const headerH = await page.locator('.budget-page').first().locator('header').first().evaluate((e) => e.getBoundingClientRect().height)
+    expect(headerH).toBeGreaterThan(100)
   })
 
   test('formulario: calcula el total, valida y guarda', async ({ page }) => {
