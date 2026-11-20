@@ -3,7 +3,7 @@ import { useCrm } from '../CrmContext'
 import { Badge, Page, Stat } from '../ui'
 import { cashEntries, cashSummary, daysUntil, debtStatus, isLowStock, obraFinance, pendingBudgets, stockQty } from '../../utils/crmCalc'
 import { computeTotals } from '../../types/budget'
-import { formatMoney, formatLongDate, formatUsd } from '../../utils/money'
+import { formatMoney, formatLongDate, formatNumber, formatUsd } from '../../utils/money'
 import { useBlueRate } from '../../utils/dolar'
 import { getOverrunPct } from '../../utils/crmStore'
 
@@ -79,7 +79,7 @@ export function Dashboard() {
       key: 's' + i.id,
       tone: 'warn' as const,
       tag: 'Stock bajo',
-      text: `${i.name} · quedan ${stockQty(i, data)} ${i.unit}`,
+      text: `${i.name} · quedan ${formatNumber(stockQty(i, data), 2)} ${i.unit}`,
       to: 'stock',
     })),
   ]

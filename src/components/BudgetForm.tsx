@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Budget, computeTotals } from '../types/budget'
+import { Budget, BUDGET_SYSTEMS, computeTotals } from '../types/budget'
 import { MoneyInput } from './MoneyInput'
 import { EditableList } from './EditableList'
 import { BudgetPreview } from './BudgetPreview'
@@ -427,6 +427,25 @@ export function BudgetForm({ initial, onCancel, onSave, onPreview }: Props) {
 
           <Section title="3. Trabajo" hint={b.workTitle}>
             <div className="space-y-3">
+              <div>
+                <label className="label">Sistema</label>
+                <div className="grid grid-cols-1 xs:grid-cols-3 gap-2">
+                  {BUDGET_SYSTEMS.map((sys) => {
+                    const active = b.description === sys.description
+                    return (
+                      <button
+                        key={sys.id}
+                        type="button"
+                        onClick={() => setB((prev) => ({ ...prev, workTitle: sys.workTitle, description: sys.description, stages: [...sys.stages], materials: [...sys.materials] }))}
+                        className={'rounded-xl border px-3 py-2.5 text-[13px] font-semibold text-left transition ' + (active ? 'border-romero-ink bg-romero-yellow' : 'border-romero-gray-2 bg-white hover:border-romero-ink')}
+                      >
+                        {sys.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-[12px] text-romero-gray-3 mt-1.5">Carga la descripción, las etapas y los materiales. Después podés retocarlos.</p>
+              </div>
               <div>
                 <label className="label">Título del trabajo</label>
                 <input

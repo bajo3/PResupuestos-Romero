@@ -77,6 +77,25 @@ test.describe('Presupuestos', () => {
     await page.getByRole('button', { name: 'Guardar' }).first().click()
     await expect(page.locator('.budget-page')).toHaveCount(2)
   })
+
+  test('los botones de sistema cargan etapas y materiales; los montos llevan puntos al escribir', async ({ page }) => {
+    await page.goto('/#/presupuestos')
+    await page.getByText('+ Nuevo presupuesto').click()
+    await page.getByPlaceholder('69.000').fill('1500000')
+    await expect(page.getByPlaceholder('69.000')).toHaveValue('1.500.000')
+
+    await page.getByRole('button', { name: 'Poliuretano + geotextil' }).click()
+    await expect(page.locator('textarea').first()).toHaveValue(/poliuretano y geotextil/)
+    await page.getByRole('button', { name: 'Mapelastic + geotextil' }).click()
+    await expect(page.locator('textarea').first()).toHaveValue(/Mapelastic/)
+
+    await page.getByPlaceholder('Consorcio Castagnino').fill('Cliente Test')
+    await page.getByPlaceholder('Paz 1333').fill('Calle 123')
+    await page.getByPlaceholder('200').fill('10')
+    await page.getByRole('button', { name: 'Guardar' }).first().click()
+    await expect(page.locator('.budget-sheet')).toContainText('Segunda capa de Mapelastic')
+    await expect(page.locator('.budget-sheet')).toContainText('Manto geotextil de refuerzo')
+  })
 })
 
 // ─── Caja ─────────────────────────────────────────────────────────────────────

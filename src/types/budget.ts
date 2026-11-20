@@ -140,3 +140,72 @@ export function computeTotals(b: Budget): Totals {
   const final = total * (b.finalPct / 100)
   return { subtotal, vat, total, advance, final }
 }
+
+/** Sistemas predefinidos: un toque carga título, descripción, etapas y materiales. */
+export interface BudgetSystem {
+  id: string
+  label: string
+  workTitle: string
+  description: string
+  stages: string[]
+  materials: string[]
+}
+
+export const BUDGET_SYSTEMS: BudgetSystem[] = [
+  {
+    id: 'mapelastic',
+    label: 'Mapelastic + geotextil',
+    workTitle: 'Sistema de Impermeabilización Profesional',
+    description:
+      'Sistema de impermeabilización con manto geotextil y Mapelastic. Preparación y acondicionamiento del soporte, limpieza de la superficie y tratamiento de juntas, fisuras y puntos críticos. Aplicación de sistema impermeabilizante mediante Mapelastic, incorporando manto geotextil como refuerzo, logrando una membrana continua, flexible y de alta adherencia. Finalización con las capas correspondientes del sistema, garantizando una adecuada protección frente a filtraciones y movimientos del soporte.',
+    stages: [
+      'Preparación del soporte: limpieza profunda de la superficie, eliminación de material suelto y acondicionamiento de la base.',
+      'Tratamiento de puntos críticos: sellado y refuerzo de juntas, fisuras, encuentros y desagües.',
+      'Primera capa de Mapelastic: aplicación del revestimiento impermeabilizante sobre el soporte preparado.',
+      'Colocación del manto geotextil: incorporación del refuerzo sobre la primera capa fresca, asegurando su correcta integración y continuidad.',
+      'Segunda capa de Mapelastic: recubrimiento del geotextil hasta lograr su completa saturación y cobertura.',
+      'Terminación: aplicación de las capas finales correspondientes al sistema, conformando una protección impermeable, flexible y continua.',
+    ],
+    materials: [
+      'Mapelastic calidad profesional.',
+      'Manto geotextil de refuerzo.',
+      'Selladores y accesorios de terminación.',
+    ],
+  },
+  {
+    id: 'ecodry',
+    label: 'Membrana ECO DRY',
+    workTitle: 'Sistema de Impermeabilización Profesional',
+    description:
+      'Provisión y ejecución de sistema de impermeabilización profesional, mediante colocación de membrana ECO DRY Revestech aplicada sobre la superficie indicada. (Este precio incluye la retirada de toda la membrana colocada y toda la suciedad que haya en la terraza).',
+    stages: [
+      'Limpieza y preparación de superficies.',
+      'Colocación de membrana ECO DRY.',
+      'Tratamiento integral de uniones y solapes.',
+      'Refuerzo en encuentros críticos y zonas de desagüe.',
+      'Fijación mediante anclaje químico en canaletas y puntos de encuentro con chapa existente.',
+      'Sellado técnico de terminaciones.',
+    ],
+    materials: ['Membrana ECO DRY calidad profesional.'],
+  },
+  {
+    id: 'poliuretano',
+    label: 'Poliuretano + geotextil',
+    workTitle: 'Sistema de Impermeabilización Profesional',
+    description:
+      'Sistema de impermeabilización con poliuretano y geotextil. Mantenimiento de terraza. (Este presupuesto incluye el retiro de la membrana existente y la extracción de los restos anteriores, plantas, desperdicios, etc.).',
+    stages: [
+      'Preparación del soporte: limpieza profunda de la superficie y eliminación de material flojo, suciedad y restos de impermeabilizaciones deterioradas.',
+      'Reparación de sectores deteriorados: tratamiento y sellado de fisuras y grietas, y reparación de zonas degradadas con materiales compatibles.',
+      'Refuerzo de encuentros, desagües y puntos críticos.',
+      'Imprimación: aplicación de primer compatible con el sistema de poliuretano para favorecer la adherencia sobre el soporte existente, respetando los tiempos de secado indicados por el fabricante.',
+      'Aplicación de capas de poliuretano: manos sucesivas de PU hasta cubrir completamente el geotextil, formando una membrana impermeabilizante continua, flexible y adherida al soporte.',
+      'Terminación y protección: mano final de poliuretano según las especificaciones del sistema y verificación de continuidad, adherencia y correcta cobertura de toda la superficie intervenida.',
+    ],
+    materials: [
+      'Poliuretano impermeabilizante calidad profesional.',
+      'Manto geotextil de refuerzo.',
+      'Primer compatible con el sistema.',
+    ],
+  },
+]

@@ -24,6 +24,8 @@ export function parseNumber(input: string): number {
   if (!input) return 0
   // acepta "13.800.000,00" o "13800000.00"
   const cleaned = input.replace(/\s/g, '').replace(/\$/g, '')
+  // "1.500.000" → puntos de miles (formato AR sin decimales)
+  if (/^-?\d{1,3}(\.\d{3})+$/.test(cleaned)) return Number(cleaned.replace(/\./g, '')) || 0
   // si tiene coma → formato AR
   if (cleaned.includes(',')) {
     return Number(cleaned.replace(/\./g, '').replace(',', '.')) || 0

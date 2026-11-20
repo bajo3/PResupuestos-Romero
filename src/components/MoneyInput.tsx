@@ -11,6 +11,16 @@ interface Props {
   autoFocus?: boolean
 }
 
+/** Pone los puntos de miles mientras se escribe: "1500000" → "1.500.000" (acepta decimales con coma). */
+export function liveFormat(raw: string): string {
+  const cleaned = raw.replace(/[^\d,]/g, '')
+  if (!cleaned) return ''
+  const [intPart, ...rest] = cleaned.split(',')
+  const digits = intPart.replace(/^0+(?=\d)/, '')
+  const intFmt = digits ? formatNumber(Number(digits), 0) : '0'
+  return rest.length ? intFmt + ',' + rest.join('').slice(0, 2) : intFmt
+}
+
 export function MoneyInput({ value, onChange, placeholder, prefix = '$', className, id, autoFocus }: Props) {
   const [text, setText] = useState<string>(value === 0 ? '' : formatNumber(value, 0))
 
@@ -40,9 +50,9 @@ export function MoneyInput({ value, onChange, placeholder, prefix = '$', classNa
         placeholder={placeholder}
         value={text}
         onChange={(e) => {
-          const raw = e.target.value
-          setText(raw)
-          onChange(parseNumber(raw))
+          const formatted = liveFormat(e.target.value)
+          setText(formatted)
+          onChange(parseNumber(formatted))
         }}
         onBlur={() => {
           const n = parseNumber(text)
