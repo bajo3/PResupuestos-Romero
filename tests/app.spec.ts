@@ -51,6 +51,31 @@ test.describe('Presupuestos', () => {
     expect(pages).toBe(2)
   })
 
+  test('un presupuesto largo achica la letra para entrar en 2 hojas', async ({ page }) => {
+    const wordy = { ...budget, stages: Array.from({ length: 11 }, (_, i) => `Etapa ${i + 1}: preparación y tratamiento del soporte con limpieza profunda, sellado de fisuras y refuerzo de puntos críticos en toda la superficie.`) }
+    await seed(page, { 'romero.budgets.v1': [wordy] })
+    await page.goto('/#/presupuestos')
+    await page.getByText('👁 Ver').click()
+    await expect(page.locator('.budget-page')).toHaveCount(2)
+    await page.waitForTimeout(1500)
+    await expect(page.getByText('no entra en 2 hojas')).toHaveCount(0)
+    const size = await page.locator('.budget-sheet').getByText('Etapa 1:').evaluate((e) => parseFloat(getComputedStyle(e).fontSize))
+    expect(size).toBeLessThan(12.5)
+  })
+
+  test('el PDF de un recibo sale en una sola hoja', async ({ page }) => {
+    await seed(page, { 'romero.receipts.v1': [{ id: 'r9', number: '012', date: today, client: 'Lorena González', address: 'Chacabuco 838', concept: 'Anticipo de obra', amount: 3425000, paymentMethod: 'Efectivo', budgetNumber: '014', notes: 'Se entrega recibo por el 50% del presupuesto.', ...base }] })
+    await page.goto('/#/recibos')
+    await page.getByText('👁 Ver').first().click()
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Descargar PDF' }).click(),
+    ])
+    const fs = await import('node:fs')
+    const pdf = fs.readFileSync((await download.path())!).toString('latin1')
+    expect((pdf.match(/\/Type\s*\/Page[^s]/g) ?? []).length).toBe(1)
+  })
+
   test('avisa si el contenido no entra en 2 hojas', async ({ page }) => {
     const long = { ...budget, stages: Array.from({ length: 24 }, (_, i) => `Etapa ${i + 1} con bastante texto descriptivo para ocupar espacio en la primera hoja del presupuesto.`) }
     await seed(page, { 'romero.budgets.v1': [long] })

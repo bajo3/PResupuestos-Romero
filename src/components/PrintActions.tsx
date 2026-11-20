@@ -55,6 +55,16 @@ async function buildPdf(clientName: string, docType: string): Promise<{ pdf: imp
       return { pdf, filename }
     }
 
+    // Recibo: una sola hoja (si no, el pie se corta y pasa a una segunda página)
+    if (docType === 'recibo') {
+      const canvas = await html2canvas(sheet, cap)
+      let w = pageW
+      let h = (canvas.height * pageW) / canvas.width
+      if (h > usableH) { h = usableH; w = (canvas.width * h) / canvas.height }
+      pdf.addImage(canvas, 'JPEG', (pageW - w) / 2, marginY, w, h)
+      return { pdf, filename }
+    }
+
     for (const block of blocks) {
       const canvas = await html2canvas(block, cap)
       const blockH = (canvas.height * pageW) / canvas.width

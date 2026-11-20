@@ -112,16 +112,32 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
   const p1 = useRef<HTMLDivElement>(null)
   const p2 = useRef<HTMLDivElement>(null)
 
+  // Si el texto no entra en la hoja, la letra se achica de a poco (hasta un mínimo) antes de avisar que se corta.
+  const STEPS = [1, 0.94, 0.88, 0.82, 0.77]
+  const [fit1, setFit1] = useState(0) // hoja 1: descripción, etapas y materiales
+  const [fit2, setFit2] = useState(0) // hoja 2: condiciones
+  const lastBudget = useRef(budget)
+  const z1 = STEPS[fit1]
+  const z2 = STEPS[fit2]
+
   useEffect(() => {
+    if (lastBudget.current !== budget) {
+      lastBudget.current = budget
+      if (fit1 !== 0 || fit2 !== 0) { setFit1(0); setFit2(0); return }
+    }
     const check = () => {
-      const over = [p1.current, p2.current].some((el) => !!el && el.scrollHeight > el.clientHeight + 1)
-      onOverflow(over)
+      const over1 = !!p1.current && p1.current.scrollHeight > p1.current.clientHeight + 1
+      const over2 = !!p2.current && p2.current.scrollHeight > p2.current.clientHeight + 1
+      if (over1 && fit1 < STEPS.length - 1) { setFit1(fit1 + 1); return }
+      if (over2 && fit2 < STEPS.length - 1) { setFit2(fit2 + 1); return }
+      onOverflow(over1 || over2)
     }
     check()
     const id = window.setTimeout(check, 400)
     void document.fonts?.ready.then(check)
     return () => window.clearTimeout(id)
-  }, [budget, onOverflow])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [budget, onOverflow, fit1, fit2])
 
   return (
     <div>
@@ -182,7 +198,7 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
               <h2 className="font-display" style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.2, margin: '0 0 8px' }}>
                 {budget.workTitle}
               </h2>
-              <p style={{ fontSize: 13, lineHeight: 1.55, color: 'rgba(11,11,11,0.8)', whiteSpace: 'pre-line', margin: 0 }}>
+              <p style={{ fontSize: 13 * z1, lineHeight: 1.55, color: 'rgba(11,11,11,0.8)', whiteSpace: 'pre-line', margin: 0 }}>
                 {budget.description}
               </p>
             </section>
@@ -191,7 +207,7 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
             <section style={{ padding: '18px 40px 4px', display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: 28 }}>
               <div>
                 <SectionTitle n="02" label="Etapas de obra" />
-                <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12.5, lineHeight: 1.4 }}>
+                <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 * z1, fontSize: 12.5 * z1, lineHeight: 1.4 }}>
                   {budget.stages.map((s, i) => (
                     <li key={i} style={{ display: 'flex', gap: 8 }}>
                       <span style={{ flexShrink: 0, width: 22, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, background: INK, color: 'white', fontSize: 10, fontWeight: 700, lineHeight: '14px' }}>
@@ -204,7 +220,7 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
               </div>
               <div>
                 <SectionTitle n="03" label="Materiales" />
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12.5, lineHeight: 1.4 }}>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 * z1, fontSize: 12.5 * z1, lineHeight: 1.4 }}>
                   {budget.materials.map((m, i) => (
                     <li key={i} style={{ display: 'flex', gap: 8 }}>
                       <span style={{ flexShrink: 0, marginTop: 1, width: 16, height: 16, borderRadius: 4, background: YELLOW, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -314,9 +330,9 @@ function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => 
 
             <section style={{ padding: '26px 40px 4px' }}>
               <SectionTitle n="05" label="Condiciones comerciales" />
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, columnCount: 2, columnGap: 28, fontSize: 11.5, lineHeight: 1.4 }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, columnCount: 2, columnGap: 28, fontSize: 11.5 * z2, lineHeight: 1.4 }}>
                 {budget.conditions.map((c, i) => (
-                  <li key={i} style={{ display: 'flex', gap: 8, breakInside: 'avoid', marginBottom: 10 }}>
+                  <li key={i} style={{ display: 'flex', gap: 8, breakInside: 'avoid', marginBottom: 10 * z2 }}>
                     <span className="font-display" style={{ flexShrink: 0, width: 20, fontSize: 10.5, fontWeight: 700, color: '#E6BE00' }}>
                       {String(i + 1).padStart(2, '0')}
                     </span>
