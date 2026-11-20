@@ -1,3 +1,5 @@
+import { today } from './crm'
+
 export interface Budget {
   id: string
   number: string
@@ -61,7 +63,7 @@ export function makeEmptyBudget(): Budget {
   return {
     id: crypto.randomUUID(),
     number: '',
-    date: new Date().toISOString().slice(0, 10),
+    date: today(),
     client: '',
     address: '',
     propertyType: 'Vivienda',

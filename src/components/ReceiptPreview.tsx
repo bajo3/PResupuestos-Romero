@@ -1,6 +1,7 @@
 import { Receipt } from '../types/receipt'
 import { formatMoney, formatLongDate } from '../utils/money'
 import { BrandLogo } from './BrandLogo'
+import { ReceiptMobile } from './MobileDocs'
 
 interface Props {
   receipt: Receipt
@@ -28,7 +29,17 @@ function Row({ label, value, large }: { label: string; value: string; large?: bo
   )
 }
 
-export function ReceiptPreview({ receipt: r }: Props) {
+/** En el celular se muestra una vista de lectura; el recibo en formato hoja queda armado fuera de pantalla para el PDF y la impresión. */
+export function ReceiptPreview({ receipt }: Props) {
+  return (
+    <div>
+      <div className="doc-mobile"><ReceiptMobile receipt={receipt} /></div>
+      <div className="doc-a4 doc-a4-receipt" aria-hidden="true"><ReceiptSheet receipt={receipt} /></div>
+    </div>
+  )
+}
+
+function ReceiptSheet({ receipt: r }: Props) {
   return (
     <div
       className="sheet bg-white rounded-2xl shadow-lg print:shadow-none print:rounded-none overflow-hidden font-sans"

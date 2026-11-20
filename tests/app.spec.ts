@@ -35,7 +35,7 @@ test.describe('Presupuestos', () => {
     await expect(page.getByText('Consorcio Paz')).toBeVisible()
     await page.getByText('👁 Ver').click()
     await expect(page.locator('.budget-page')).toHaveCount(2)
-    await expect(page.getByText('$ 5.000.000,00').first()).toBeVisible()
+    await expect(page.locator('.budget-sheet').getByText('$ 5.000.000,00').first()).toBeVisible()
     await expect(page.getByText('no entra en 2 hojas')).toHaveCount(0)
   })
 
@@ -76,6 +76,50 @@ test.describe('Presupuestos', () => {
 
     await page.getByRole('button', { name: 'Guardar' }).first().click()
     await expect(page.locator('.budget-page')).toHaveCount(2)
+  })
+
+  test('el número nuevo sigue al más alto que ya existe', async ({ page }) => {
+    await seed(page, { 'romero.budgets.v1': [{ ...budget, number: '015' }] })
+    await page.goto('/#/presupuestos')
+    await page.getByText('+ Nuevo presupuesto').click()
+    await expect(page.getByText('N° 016').first()).toBeVisible()
+  })
+
+  test('el PDF descargado tiene 2 hojas en cualquier pantalla', async ({ page }) => {
+    await seed(page, { 'romero.budgets.v1': [budget] })
+    await page.goto('/#/presupuestos')
+    await page.getByText('👁 Ver').click()
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Descargar PDF' }).click(),
+    ])
+    const path = await download.path()
+    const pdf = (await import('node:fs')).readFileSync(path!).toString('latin1')
+    expect((pdf.match(/\/Type\s*\/Page[^s]/g) ?? []).length).toBe(2)
+  })
+
+  test('en el celular el presupuesto se lee con letra normal y sin desbordes', async ({ page, isMobile }) => {
+    test.skip(!isMobile)
+    await seed(page, { 'romero.budgets.v1': [budget] })
+    await page.goto('/#/presupuestos')
+    await page.getByText('👁 Ver').click()
+    const total = page.locator('.doc-mobile').getByText('$ 5.000.000,00').first()
+    await expect(total).toBeVisible()
+    const size = await page.locator('.doc-mobile').getByText('Limpieza.').evaluate((e) => parseFloat(getComputedStyle(e).fontSize))
+    expect(size).toBeGreaterThanOrEqual(13)
+    expect(await overflowOf(page)).toBeLessThanOrEqual(1)
+  })
+
+  test('en el celular el recibo no parte las palabras ni el importe', async ({ page, isMobile }) => {
+    test.skip(!isMobile)
+    await seed(page, { 'romero.receipts.v1': [{ id: 'r9', number: '012', date: today, client: 'Lorena González', address: 'Chacabuco 838', concept: 'Anticipo', amount: 3425000, paymentMethod: 'Efectivo', ...base }] })
+    await page.goto('/#/recibos')
+    await page.getByText('👁 Ver').first().click()
+    const amount = page.locator('.doc-mobile').getByText('$ 3.425.000,00')
+    await expect(amount).toBeVisible()
+    expect((await amount.boundingBox())!.height).toBeLessThan(45)
+    const recibo = page.locator('.doc-mobile').getByText('RECIBO', { exact: true })
+    expect((await recibo.boundingBox())!.height).toBeLessThan(40)
   })
 
   test('los botones de sistema cargan etapas y materiales; los montos llevan puntos al escribir', async ({ page }) => {

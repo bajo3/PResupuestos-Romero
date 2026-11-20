@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Budget, computeTotals } from '../types/budget'
 import { formatMoney, formatNumber, formatLongDate } from '../utils/money'
 import { BrandLogo } from './BrandLogo'
+import { BudgetMobile } from './MobileDocs'
 
 interface Props {
   budget: Budget
@@ -88,25 +89,9 @@ function Footer({ budget, page }: { budget: Budget; page: string }) {
 
 // ─── Documento ────────────────────────────────────────────────────────────────
 
+/** En el celular se muestra una vista de lectura; la hoja A4 queda armada fuera de pantalla para el PDF y la impresión. */
 export function BudgetPreview({ budget }: Props) {
-  const t = computeTotals(budget)
-  const photos = (budget.photos ?? []).slice(0, 6)
-  const pending = budget.pricingMode === 'pending'
-  const p1 = useRef<HTMLDivElement>(null)
-  const p2 = useRef<HTMLDivElement>(null)
   const [overflow, setOverflow] = useState(false)
-
-  useEffect(() => {
-    const check = () => {
-      const over = [p1.current, p2.current].some((el) => !!el && el.scrollHeight > el.clientHeight + 1)
-      setOverflow(over)
-    }
-    check()
-    const id = window.setTimeout(check, 400)
-    void document.fonts?.ready.then(check)
-    return () => window.clearTimeout(id)
-  }, [budget])
-
   return (
     <div>
       {overflow && (
@@ -114,6 +99,32 @@ export function BudgetPreview({ budget }: Props) {
           El presupuesto no entra en 2 hojas: se está cortando contenido. Acortá textos, etapas o condiciones, o sacá alguna foto.
         </div>
       )}
+      <div className="doc-mobile"><BudgetMobile budget={budget} /></div>
+      <div className="doc-a4" aria-hidden="true"><BudgetA4 budget={budget} onOverflow={setOverflow} /></div>
+    </div>
+  )
+}
+
+function BudgetA4({ budget, onOverflow }: Props & { onOverflow: (v: boolean) => void }) {
+  const t = computeTotals(budget)
+  const photos = (budget.photos ?? []).slice(0, 6)
+  const pending = budget.pricingMode === 'pending'
+  const p1 = useRef<HTMLDivElement>(null)
+  const p2 = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const check = () => {
+      const over = [p1.current, p2.current].some((el) => !!el && el.scrollHeight > el.clientHeight + 1)
+      onOverflow(over)
+    }
+    check()
+    const id = window.setTimeout(check, 400)
+    void document.fonts?.ready.then(check)
+    return () => window.clearTimeout(id)
+  }, [budget, onOverflow])
+
+  return (
+    <div>
       <Scaler>
         <article className="budget-sheet">
           {/* ================= HOJA 1 ================= */}

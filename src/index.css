@@ -148,3 +148,15 @@ button.underline { padding: 0.55rem 0.45rem; min-height: 40px; }
   background: #fff;
   @apply shadow-sheet rounded-2xl;
 }
+
+/* Presupuesto y recibo: vista de lectura en celular; la hoja A4 queda fuera de pantalla (PDF e impresión) */
+.doc-mobile { display: none; }
+@media (max-width: 639px) {
+  .doc-mobile { display: block; }
+  .doc-a4 { position: absolute; left: -10000px; top: 0; width: 794px; pointer-events: none; }
+  .doc-a4-receipt { width: 680px; }
+}
+@media print {
+  .doc-mobile { display: none !important; }
+  .doc-a4 { position: static !important; left: auto !important; width: auto !important; pointer-events: auto; }
+}

@@ -29,17 +29,30 @@ export function nextBudgetNumber(): string {
   return String(next).padStart(3, '0')
 }
 
+/** Mayor número usado en una lista ("015" → 15). */
+function maxNumber(list: { number?: string }[]): number {
+  return list.reduce((m, x) => Math.max(m, parseInt(x.number ?? '', 10) || 0), 0)
+}
+
+/** Nunca repite un número que ya existe: toma el mayor entre el contador y lo ya cargado. */
+function pickNumber(remote: string | null, used: number): string {
+  const r = remote ? parseInt(remote, 10) || 0 : 0
+  return String(Math.max(r, used + 1)).padStart(3, '0')
+}
+
 /** Versión async: usa Supabase como fuente de verdad, fallback a localStorage */
 export async function nextBudgetNumberAsync(): Promise<string> {
   try {
     const remote = await nextBudgetNumberFromSupabase()
     if (remote) {
-      // Sincroniza también el contador local para que no se desincronicen
-      localStorage.setItem(SEQ_KEY, String(parseInt(remote, 10)))
-      return remote
+      const n = pickNumber(remote, maxNumber(loadBudgets()))
+      localStorage.setItem(SEQ_KEY, String(parseInt(n, 10)))
+      return n
     }
   } catch { /* fallback */ }
-  return nextBudgetNumber()
+  const n = pickNumber(null, Math.max(maxNumber(loadBudgets()), parseInt(localStorage.getItem(SEQ_KEY) || '0', 10)))
+  localStorage.setItem(SEQ_KEY, String(parseInt(n, 10)))
+  return n
 }
 
 // ─── Clientes ─────────────────────────────────────────────────────────────────
@@ -167,11 +180,14 @@ export async function nextReceiptNumberAsync(): Promise<string> {
   try {
     const remote = await nextReceiptNumberFromSupabase()
     if (remote) {
-      localStorage.setItem(RECEIPT_SEQ_KEY, String(parseInt(remote, 10)))
-      return remote
+      const n = pickNumber(remote, maxNumber(loadReceipts()))
+      localStorage.setItem(RECEIPT_SEQ_KEY, String(parseInt(n, 10)))
+      return n
     }
   } catch { /* fallback */ }
-  return nextReceiptNumber()
+  const n = pickNumber(null, Math.max(maxNumber(loadReceipts()), parseInt(localStorage.getItem(RECEIPT_SEQ_KEY) || '0', 10)))
+  localStorage.setItem(RECEIPT_SEQ_KEY, String(parseInt(n, 10)))
+  return n
 }
 
 export function loadReceipts(): Receipt[] {
