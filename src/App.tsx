@@ -240,6 +240,7 @@ export default function App() {
           onBack={() => backFromDoc(() => setBudgetView({ kind: 'list' }))}
           onEdit={() => setBudgetView({ kind: 'form', budget: budgetView.budget })}
           clientName={budgetView.budget.client}
+          docNumber={budgetView.budget.number}
         />
         <main className="px-3 sm:px-6 py-4 sm:py-8 print:p-0">
           <BudgetPreview budget={budgetView.budget} />
@@ -269,6 +270,7 @@ export default function App() {
           onBack={() => backFromDoc(() => setReceiptView({ kind: 'list' }))}
           onEdit={() => setReceiptView({ kind: 'form', receipt: receiptView.receipt })}
           clientName={receiptView.receipt.client}
+          docNumber={receiptView.receipt.number}
           docType="recibo"
         />
         <main className="px-3 sm:px-6 py-4 sm:py-8 print:p-0">

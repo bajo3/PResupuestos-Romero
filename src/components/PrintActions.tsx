@@ -5,6 +5,8 @@ interface Props {
   onBack: () => void
   onEdit: () => void
   clientName?: string
+  /** Número del documento: va en el nombre del archivo para que dos del mismo cliente no se pisen. */
+  docNumber?: string
   docType?: 'presupuesto' | 'recibo' | 'garantia' | 'nota'
 }
 
@@ -15,10 +17,11 @@ function safeName(clientName: string): string {
 }
 
 /** Genera el PDF del documento que se está viendo. */
-async function buildPdf(clientName: string, docType: string): Promise<{ pdf: import('jspdf').jsPDF; filename: string } | null> {
+async function buildPdf(clientName: string, docType: string, docNumber = ''): Promise<{ pdf: import('jspdf').jsPDF; filename: string } | null> {
   const sheet = document.querySelector('.sheet, .budget-sheet') as HTMLElement | null
   if (!sheet) return null
-  const filename = `${docType}-${safeName(clientName)}.pdf`
+  const num = docNumber.replace(/[^0-9a-zA-Z-]/g, '')
+  const filename = `${docType}${num ? '-' + num : ''}-${safeName(clientName)}.pdf`
 
   // El presupuesto se muestra reducido con transform: se captura a tamaño real.
   const scaled = sheet.closest('.budget-scale-inner') as HTMLElement | null
@@ -103,14 +106,14 @@ async function buildPdf(clientName: string, docType: string): Promise<{ pdf: imp
   }
 }
 
-export function PrintActions({ onBack, onEdit, clientName = '', docType = 'presupuesto' }: Props) {
+export function PrintActions({ onBack, onEdit, clientName = '', docNumber = '', docType = 'presupuesto' }: Props) {
   const { clients } = useCrm()
   const [busy, setBusy] = useState<'pdf' | 'share' | null>(null)
 
   const download = async () => {
     setBusy('pdf')
     try {
-      const built = await buildPdf(clientName, docType)
+      const built = await buildPdf(clientName, docType, docNumber)
       built?.pdf.save(built.filename)
     } finally {
       setBusy(null)
@@ -121,7 +124,7 @@ export function PrintActions({ onBack, onEdit, clientName = '', docType = 'presu
   const shareWhatsApp = async () => {
     setBusy('share')
     try {
-      const built = await buildPdf(clientName, docType)
+      const built = await buildPdf(clientName, docType, docNumber)
       if (!built) return
       const text = `Hola${clientName ? ' ' + clientName : ''}, te paso el ${DOC_LABEL[docType]} de Lucas Gallastagui Impermeabilizaciones.`
       const file = new File([built.pdf.output('blob')], built.filename, { type: 'application/pdf' })

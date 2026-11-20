@@ -148,7 +148,7 @@ function ReceiptSheet({ receipt: r }: Props) {
             <div
               style={{ fontSize: '34px', color: '#F5C800', lineHeight: 1.25, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}
             >
-              {formatMoney(r.amount)}
+              <span style={{ position: 'relative', top: '-5px' }}>{formatMoney(r.amount)}</span>
             </div>
             <div
               style={{
