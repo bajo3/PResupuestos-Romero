@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Budget, makeEmptyBudget } from './types/budget'
 import { Receipt, makeEmptyReceipt } from './types/receipt'
 import {
-  loadBudgets, saveBudgets, nextBudgetNumberAsync, refreshBudgetsFromCloud, archiveBudget,
+  loadBudgets, saveBudgets, nextBudgetNumberAsync, refreshBudgetsFromCloud, archiveBudget, ensureBudgetPhotos,
   loadReceipts, saveReceipts, nextReceiptNumberAsync, refreshReceiptsFromCloud, archiveReceipt,
 } from './utils/storage'
 import { BudgetList } from './components/BudgetList'
@@ -69,6 +69,7 @@ export default function App() {
 
   // Presupuestos
   const [budgets, setBudgets] = useState<Budget[]>(() => loadBudgets())
+  const budgetsRef = useRef(budgets); budgetsRef.current = budgets
   const [budgetView, setBudgetView] = useState<BudgetView>({ kind: 'list' })
 
   // Recibos
@@ -107,7 +108,8 @@ export default function App() {
 
   // ── Presupuestos ──────────────────────────────────────────────────────────
 
-  const upsertBudget = (b: Budget) => {
+  const upsertBudget = (saved: Budget) => {
+    const b = saved.photos ? { ...saved, photoCount: saved.photos.length } : saved
     setBudgets((list) => {
       const idx = list.findIndex((x) => x.id === b.id)
       if (idx === -1) return [b, ...list]
@@ -120,19 +122,36 @@ export default function App() {
     b.number = await nextBudgetNumberAsync()
     setBudgetView({ kind: 'form', budget: b })
   }
-  const handleEditBudget = (id: string) => {
-    const b = budgets.find((x) => x.id === id)
+  /** Abre un presupuesto con sus fotos: el listado de la nube viene sin ellas y se piden recién acá. */
+  const [opening, setOpening] = useState(false)
+  const loadFull = async (id: string): Promise<Budget | null> => {
+    const b = budgetsRef.current.find((x) => x.id === id)
+    if (!b) return null
+    const need = b.photoCount ?? b.photos?.length ?? 0
+    if (need === 0 || (b.photos && b.photos.length >= need)) return b
+    setOpening(true)
+    try {
+      const full = await ensureBudgetPhotos(b)
+      if (full.photos) setBudgets((list) => list.map((x) => (x.id === id && !x.photos ? { ...x, photos: full.photos } : x)))
+      return full
+    } finally {
+      setOpening(false)
+    }
+  }
+  const handleEditBudget = async (id: string) => {
+    const b = await loadFull(id)
     if (b) setBudgetView({ kind: 'form', budget: b })
   }
-  const handleViewBudget = (id: string) => {
-    const b = budgets.find((x) => x.id === id)
+  const handleViewBudget = async (id: string) => {
+    const b = await loadFull(id)
     if (b) setBudgetView({ kind: 'preview', budget: b })
   }
-  const handleDuplicateBudget = (id: string) => {
-    const b = budgets.find((x) => x.id === id)
+  const handleDuplicateBudget = async (id: string) => {
+    const b = await loadFull(id)
     if (!b) return
     const copy: Budget = {
       ...b,
+      photoCount: b.photos?.length,
       id: crypto.randomUUID(),
       number: b.number ? b.number + ' (copia)' : '',
       createdAt: Date.now(),
@@ -173,17 +192,16 @@ export default function App() {
 
   // ── Acciones de documentos para el CRM ────────────────────────────────────
 
-  const budgetsRef = useRef(budgets); budgetsRef.current = budgets
   const receiptsRef = useRef(receipts); receiptsRef.current = receipts
 
   const docs = useMemo<DocActions>(() => {
     const from = () => { const r = readRoute(); returnTo.current = r.startsWith('presupuestos') || r.startsWith('recibos') ? null : r }
     return {
       newBudget: () => { from(); navigate('presupuestos'); handleNewBudget() },
-      viewBudget: (id) => {
-        const b = budgetsRef.current.find((x) => x.id === id)
-        if (!b) return
-        from(); navigate('presupuestos'); setBudgetView({ kind: 'preview', budget: b })
+      viewBudget: async (id) => {
+        from(); navigate('presupuestos')
+        const b = await loadFull(id)
+        if (b) setBudgetView({ kind: 'preview', budget: b })
       },
       newReceipt: (preset) => { from(); navigate('recibos'); handleNewReceipt(preset) },
       viewReceipt: (id) => {
@@ -302,6 +320,11 @@ export default function App() {
   return (
     <CrmProvider budgets={budgets} receipts={receipts} navigate={navigate} docs={docs}>
       {bare ? content : <Shell section={known} onGo={goSection}>{content}</Shell>}
+      {opening && (
+        <div role="status" className="no-print fixed bottom-20 left-1/2 -translate-x-1/2 z-50 rounded-full bg-romero-ink text-white text-[13px] font-semibold px-4 py-2 shadow-lg">
+          Cargando fotos…
+        </div>
+      )}
     </CrmProvider>
   )
 }

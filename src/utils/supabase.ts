@@ -25,8 +25,19 @@ export interface CloudRow {
 
 export async function syncBudgetToSupabase(data: object, id: string, archived = false, updatedAt = Date.now()): Promise<void> {
   if (!supabase) return
-  const { error } = await supabase.from('budgets').upsert({ id, data, updated_at: updatedAt, archived })
+  // photoCount es solo del listado liviano. Si el dispositivo no trae las fotos (no las bajó), la nube conserva las suyas.
+  const { photoCount: _ignored, ...clean } = data as Record<string, unknown>
+  void _ignored
+  const { error } = await supabase.rpc('upsert_budget', { p_id: id, p_data: clean, p_archived: archived, p_updated_at: updatedAt })
   if (error) throw error
+}
+
+/** Fotos de un presupuesto (se piden recién al abrirlo: en el listado pesan MB). */
+export async function fetchBudgetPhotos(id: string): Promise<string[] | null> {
+  if (!supabase) return null
+  const { data, error } = await supabase.rpc('budget_photos', { p_id: id })
+  if (error || !Array.isArray(data)) return null
+  return data as string[]
 }
 
 export async function syncClientToSupabase(client: ClientRecord): Promise<void> {
@@ -46,7 +57,7 @@ export async function fetchClientsFromSupabase(): Promise<ClientRecord[]> {
 /** Todas las filas (activas y archivadas). Null si no hay conexión o falló. */
 export async function fetchBudgetsFromSupabase(): Promise<CloudRow[] | null> {
   if (!supabase) return null
-  const { data, error } = await supabase.from('budgets').select('id, data, archived, updated_at')
+  const { data, error } = await supabase.rpc('budgets_light')
   if (error) return null
   return (data as CloudRow[]) ?? []
 }

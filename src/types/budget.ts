@@ -25,6 +25,8 @@ export interface Budget {
   conditions: string[]
   /** Fotos comprimidas como data URLs para que el documento sea autocontenido. */
   photos?: string[]
+  /** Cantidad de fotos guardadas en la nube (el listado se baja sin las fotos y se piden al abrir). */
+  photoCount?: number
   notes?: string
   createdAt: number
   updatedAt: number

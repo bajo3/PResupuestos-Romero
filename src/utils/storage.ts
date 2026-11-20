@@ -5,6 +5,7 @@ import {
   syncBudgetToSupabase,
   syncClientToSupabase,
   fetchBudgetsFromSupabase,
+  fetchBudgetPhotos,
   fetchClientsFromSupabase,
   nextBudgetNumberFromSupabase,
   syncReceiptToSupabase,
@@ -153,7 +154,14 @@ export async function refreshBudgetsFromCloud(): Promise<Budget[] | null> {
   try {
     const rows = await fetchBudgetsFromSupabase()
     if (!rows) return null
-    const { list, toPush, known } = mergeWithRemote<Budget>(loadBudgets(), rows)
+    const local = loadBudgets()
+    const { list: merged, toPush, known } = mergeWithRemote<Budget>(local, rows)
+    // El listado de la nube viene sin fotos: se conservan las que ya están en este dispositivo
+    const list = merged.map((b) => {
+      if (b.photos) return b
+      const mine = local.find((l) => l.id === b.id)
+      return mine?.photos && mine.photos.length === (b.photoCount ?? 0) ? { ...b, photos: mine.photos } : b
+    })
     known.forEach((t, id) => pushedBudgets.set(id, t))
     budgetsSynced = true
     localStorage.setItem(KEY, JSON.stringify(list))
@@ -165,6 +173,14 @@ export async function refreshBudgetsFromCloud(): Promise<Budget[] | null> {
     return list
   } catch { /* ignore */ }
   return null
+}
+
+/** Trae las fotos de un presupuesto si todavía no están en este dispositivo. */
+export async function ensureBudgetPhotos(b: Budget): Promise<Budget> {
+  const need = b.photoCount ?? b.photos?.length ?? 0
+  if (need === 0 || (b.photos && b.photos.length >= need)) return b
+  const photos = await fetchBudgetPhotos(b.id)
+  return photos ? { ...b, photos } : b
 }
 
 // ─── Recibos ─────────────────────────────────────────────────────────────────
